@@ -21,12 +21,25 @@ export const helmetMiddleware = helmet({
     }
   }
 });
-
 /**
- * Configure CORS policies permitting frontend access
+ * Configure CORS policies permitting frontend access including dynamic local IPs for mobile testing
  */
 export const corsMiddleware = cors({
-  origin: [frontendUrl, 'http://localhost:3000', 'http://localhost:8080'], // common dev endpoints
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    
+    const isLocal = origin.startsWith('http://localhost') || 
+                    origin.startsWith('http://127.0.0.1') ||
+                    /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin) ||
+                    /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/.test(origin) ||
+                    /^http:\/\/172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+(:\d+)?$/.test(origin);
+                    
+    if (isLocal || origin === frontendUrl) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
