@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeTrack - Personal Health & Habit Tracker</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="LifeTrack is your premium personal health assistant. Track steps, calories, water intake, sleep, and workouts. Plan custom budget meals, set reminders, and view analytics.">
+  <meta name="author" content="LifeTrack team">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Custom CSS Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Toast Notification System -->
+  <div id="toast-container"></div>
+
+  <!-- AUTHENTICATION VIEW CONTAINER -->
+  <div id="auth-container" class="auth-container">
+    <!-- Login Card -->
+    <div id="login-card" class="auth-card glass-panel">
+      <div class="auth-header">
+        <div class="brand-icon" style="margin: 0 auto;">L</div>
+        <h2>Welcome to LifeTrack</h2>
+        <p style="color: hsl(var(--text-secondary)); font-size: 0.9rem;">Sign in to check your progress</p>
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label" for="login-username">Username</label>
+          <input type="text" id="login-username" class="form-control" placeholder="e.g. tarakanta" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password</label>
+          <input type="password" id="login-password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Sign In</button>
+      </form>
+      <div class="auth-switch">
+        Don't have an account? <a href="#" id="switch-to-signup">Sign Up</a>
+      </div>
+    </div>
+
+    <!-- Signup Card (Hidden by default) -->
+    <div id="signup-card" class="auth-card glass-panel" style="display: none;">
+      <div class="auth-header">
+        <div class="brand-icon" style="margin: 0 auto;">L</div>
+        <h2>Create Account</h2>
+        <p style="color: hsl(var(--text-secondary)); font-size: 0.9rem;">Start your health tracking journey</p>
+      </div>
+      <form id="signup-form">
+        <div class="form-group">
+          <label class="form-label" for="signup-name">Full Name</label>
+          <input type="text" id="signup-name" class="form-control" placeholder="e.g. Tarakanta Parida" required autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="signup-username">Username</label>
+          <input type="text" id="signup-username" class="form-control" placeholder="e.g. tarakanta" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="signup-password">Password</label>
+          <input type="password" id="signup-password" class="form-control" placeholder="••••••••" required autocomplete="new-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Create Account</button>
+      </form>
+      <div class="auth-switch">
+        Already have an account? <a href="#" id="switch-to-login">Sign In</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP WORKSPACE CONTAINER (Hidden by default) -->
+  <div id="app-workspace" class="app-container" style="display: none;">
+    <!-- Desktop Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">L</div>
+        <div class="brand-name">LifeTrack</div>
+      </div>
+      <nav class="nav-menu">
+        <li>
+          <a class="nav-link active" data-view="dashboard">
+            <i data-lucide="layout-dashboard"></i> Dashboard
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-view="activity">
+            <i data-lucide="activity"></i> Log Activity
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-view="meals">
+            <i data-lucide="utensils"></i> Meal Planner
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-view="reminders">
+            <i data-lucide="bell"></i> Reminders
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-view="analytics">
+            <i data-lucide="line-chart"></i> Analytics
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-view="history">
+            <i data-lucide="history"></i> History
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" data-view="profile">
+            <i data-lucide="user"></i> Profile
+          </a>
+        </li>
+      </nav>
+      <div class="sidebar-footer">
+        <a class="user-profile-summary" data-view="profile">
+          <div class="user-avatar" id="sidebar-avatar">TP</div>
+          <div class="user-info">
+            <span class="user-name" id="sidebar-user-name">User Name</span>
+            <span class="user-role">Premium User</span>
+          </div>
+        </a>
+        <button class="logout-btn" id="logout-button">
+          <i data-lucide="log-out"></i> Log Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav">
+      <a class="mobile-nav-link active" data-view="dashboard">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Dash</span>
+      </a>
+      <a class="mobile-nav-link" data-view="activity">
+        <i data-lucide="activity"></i>
+        <span>Log</span>
+      </a>
+      <a class="mobile-nav-link" data-view="meals">
+        <i data-lucide="utensils"></i>
+        <span>Meals</span>
+      </a>
+      <a class="mobile-nav-link" data-view="reminders">
+        <i data-lucide="bell"></i>
+        <span>Alerts</span>
+      </a>
+      <a class="mobile-nav-link" data-view="profile">
+        <i data-lucide="user"></i>
+        <span>Profile</span>
+      </a>
+    </nav>
+
+    <!-- Main Workspace Area -->
+    <main class="main-wrapper">
+      <header class="content-header">
+        <div class="header-title">
+          <h1 id="view-title">Dashboard</h1>
+          <p id="view-subtitle">Welcome back! Here's your lifestyle report.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="header-today-btn">
+            <i data-lucide="calendar"></i> <span id="current-date-display">July 5, 2026</span>
+          </button>
+          <button class="btn btn-primary" id="quick-log-btn">
+            <i data-lucide="plus"></i> Quick Log
+          </button>
+        </div>
+      </header>
+
+      <!-- 1. DASHBOARD VIEW -->
+      <section id="dashboard-view" class="view-section active">
+        <div class="dashboard-grid">
+          <!-- Main Progress Ring -->
+          <div class="col-4 glass-panel progress-ring-container">
+            <h3 style="margin-bottom: 0.5rem; text-align: center;">Daily Goal Progress</h3>
+            <div class="progress-ring-wrapper">
+              <svg class="progress-ring-svg" viewBox="0 0 160 160">
+                <defs>
+                  <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#8b5cf6" />
+                    <stop offset="100%" stop-color="#3b82f6" />
+                  </linearGradient>
+                </defs>
+                <circle class="progress-ring-circle-bg" cx="80" cy="80" r="70" />
+                <circle class="progress-ring-circle" id="today-progress-circle" cx="80" cy="80" r="70" />
+              </svg>
+              <div class="progress-ring-text">
+                <div class="progress-ring-percent" id="today-progress-percent">0%</div>
+                <div class="progress-ring-label">Achieved</div>
+              </div>
+            </div>
+            <p style="margin-top: 1rem; font-size: 0.8rem; color: hsl(var(--text-secondary)); text-align: center;" id="today-progress-summary">
+              Keep moving! You are 0% towards steps & water targets.
+            </p>
+          </div>
+
+          <!-- Quick Metrics Cards -->
+          <div class="col-8">
+            <div class="dashboard-grid" style="height: 100%; margin-bottom: 0;">
+              <!-- Steps Card -->
+              <div class="col-6 glass-panel metric-summary-card">
+                <div class="metric-icon-box steps">
+                  <i data-lucide="footprints"></i>
+                </div>
+                <div class="metric-content">
+                  <div class="metric-title">Steps Taken</div>
+                  <div class="metric-value" id="dash-steps">0</div>
+                  <div class="metric-subtitle" id="dash-steps-goal">Goal: 10,000 steps</div>
+                  <div class="steps-progress-bar">
+                    <div class="steps-progress-fill" id="dash-steps-bar" style="width: 0%;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Water Card -->
+              <div class="col-6 glass-panel metric-summary-card">
+                <div class="metric-icon-box water">
+                  <i data-lucide="droplet"></i>
+                </div>
+                <div class="metric-content">
+                  <div class="metric-title">Water Intake</div>
+                  <div class="metric-value" id="dash-water">0 mL</div>
+                  <div class="metric-subtitle" id="dash-water-goal">Goal: 3,000 mL</div>
+                  <div class="water-progress-bar">
+                    <div class="water-progress-fill" id="dash-water-bar" style="width: 0%;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Calories Card -->
+              <div class="col-6 glass-panel metric-summary-card">
+                <div class="metric-icon-box calories">
+                  <i data-lucide="flame"></i>
+                </div>
+                <div class="metric-content">
+                  <div class="metric-title">Energy Tracker</div>
+                  <div class="metric-value" id="dash-calories-net">0 kcal</div>
+                  <div class="metric-subtitle">
+                    <span id="dash-calories-consumed" style="color: hsl(var(--accent-calories));">0</span> in / 
+                    <span id="dash-calories-burned" style="color: hsl(var(--accent-workout));">0</span> out
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sleep Card -->
+              <div class="col-6 glass-panel metric-summary-card">
+                <div class="metric-icon-box sleep">
+                  <i data-lucide="moon"></i>
+                </div>
+                <div class="metric-content">
+                  <div class="metric-title">Sleep Hours</div>
+                  <div class="metric-value" id="dash-sleep">0 hrs</div>
+                  <div class="metric-subtitle" id="dash-sleep-goal">Goal: 8.0 hrs</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Mood Logger Widget -->
+          <div class="col-4 glass-panel log-quick-widget">
+            <div class="widget-header">
+              <h3>How's your mood today?</h3>
+              <i data-lucide="smile" style="color: hsl(var(--accent-mood));"></i>
+            </div>
+            <div class="widget-body">
+              <div class="mood-container">
+                <button class="mood-btn" data-mood="excellent">
+                  <span>😊</span>
+                  <div class="mood-label">Great</div>
+                </button>
+                <button class="mood-btn" data-mood="good">
+                  <span>🙂</span>
+                  <div class="mood-label">Good</div>
+                </button>
+                <button class="mood-btn" data-mood="neutral">
+                  <span>😐</span>
+                  <div class="mood-label">Okay</div>
+                </button>
+                <button class="mood-btn" data-mood="tired">
+                  <span>🥱</span>
+                  <div class="mood-label">Tired</div>
+                </button>
+                <button class="mood-btn" data-mood="stressed">
+                  <span>😩</span>
+                  <div class="mood-label">Stressed</div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Water Intake Card -->
+          <div class="col-4 glass-panel log-quick-widget">
+            <div class="widget-header">
+              <h3>Quick Hydrate</h3>
+              <i data-lucide="glass-water" style="color: hsl(var(--accent-water));"></i>
+            </div>
+            <div class="widget-body">
+              <div class="water-controls">
+                <div class="water-btn-group">
+                  <button class="water-btn" data-water="250">+250ml</button>
+                  <button class="water-btn" data-water="500">+500ml</button>
+                </div>
+                <div class="water-progress-text">
+                  <span id="dash-water-percent" style="font-weight: 700; font-size: 1.15rem; color: hsl(var(--accent-water));">0%</span>
+                  <div style="font-size: 0.75rem; color: hsl(var(--text-secondary));">of daily goal</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Habits Streaks Widget -->
+          <div class="col-4 glass-panel log-quick-widget">
+            <div class="widget-header">
+              <h3>Habit Streaks</h3>
+              <i data-lucide="zap" style="color: hsl(var(--accent-workout));"></i>
+            </div>
+            <div class="widget-body">
+              <div class="streak-box">
+                <div class="streak-item">
+                  <div class="streak-number" id="steps-streak-count">0</div>
+                  <div class="streak-label">Steps (Days)</div>
+                </div>
+                <div class="streak-item" style="border-left: 1px solid hsl(var(--border-color)); padding-left: 1.5rem;">
+                  <div class="streak-number" id="overall-streak-count">0</div>
+                  <div class="streak-label">Logs (Days)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Active Exercise Split Widget -->
+          <div class="col-6 glass-panel log-quick-widget">
+            <div class="widget-header">
+              <h3>Today's Exercise Target</h3>
+              <span class="badge badge-steps" id="workout-split-day-label">Workout Split</span>
+            </div>
+            <div class="widget-body">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <h4 id="dash-workout-target-name" style="font-size: 1.35rem; margin-bottom: 0.25rem;">Legs Day</h4>
+                  <p id="dash-workout-target-desc" style="font-size: 0.9rem; color: hsl(var(--text-secondary));">Suggested: Squats, Lunges, Calf raises, Leg curls</p>
+                </div>
+                <button class="btn btn-primary" id="dash-mark-workout-btn">
+                  <i data-lucide="check"></i> Log Workout
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Activity Summary Overview -->
+          <div class="col-6 glass-panel log-quick-widget">
+            <div class="widget-header">
+              <h3>Logged Activities Today</h3>
+              <i data-lucide="clipboard-list" style="color: hsl(var(--text-secondary));"></i>
+            </div>
+            <div class="widget-body">
+              <div id="dash-today-activities-list" style="font-size: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; max-height: 120px; overflow-y: auto;">
+                <div style="color: hsl(var(--text-muted)); text-align: center; padding: 1rem 0;">No activities logged today yet.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. LOG ACTIVITY VIEW -->
+      <section id="activity-view" class="view-section">
+        <div class="dashboard-grid">
+          <!-- Daily Step Logger -->
+          <div class="col-6 glass-panel">
+            <div class="widget-header">
+              <h3>Steps Tracker</h3>
+              <i data-lucide="footprints" style="color: hsl(var(--accent-steps));"></i>
+            </div>
+            <div class="widget-body">
+              <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div id="log-steps-display" style="font-size: 3.5rem; font-weight: 800; font-family: 'Outfit'; color: white;">0</div>
+                <p style="color: hsl(var(--text-secondary));">Steps logged today</p>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="add-steps-input">Add Steps</label>
+                <div style="display: flex; gap: 0.5rem;">
+                  <input type="number" id="add-steps-input" class="form-control" placeholder="e.g. 1500" min="1">
+                  <button class="btn btn-primary" id="submit-steps-btn">Add</button>
+                </div>
+              </div>
+              <div style="display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: center;">
+                <button class="water-btn" data-steps-inc="500">+500 steps</button>
+                <button class="water-btn" data-steps-inc="1000">+1000 steps</button>
+                <button class="water-btn" data-steps-inc="2000">+2000 steps</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Log Workout Activity -->
+          <div class="col-6 glass-panel">
+            <div class="widget-header">
+              <h3>Log Exercise / Sport</h3>
+              <i data-lucide="dumbbell" style="color: hsl(var(--accent-workout));"></i>
+            </div>
+            <div class="widget-body">
+              <form id="log-workout-form">
+                <div class="form-group row-group">
+                  <div>
+                    <label class="form-label" for="workout-type">Activity Type</label>
+                    <select id="workout-type" class="form-control form-select">
+                      <option value="Walking">Walking</option>
+                      <option value="Running">Running</option>
+                      <option value="Cycling">Cycling</option>
+                      <option value="Workout">Workout (Gym)</option>
+                      <option value="Yoga">Yoga</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label" for="workout-duration">Duration (Minutes)</label>
+                    <input type="number" id="workout-duration" class="form-control" placeholder="e.g. 45" min="1" required>
+                  </div>
+                </div>
+                <div class="form-group row-group">
+                  <div>
+                    <label class="form-label" for="workout-start">Start Time</label>
+                    <input type="time" id="workout-start" class="form-control" required>
+                  </div>
+                  <div>
+                    <label class="form-label" for="workout-distance">Distance (km)</label>
+                    <input type="number" id="workout-distance" class="form-control" placeholder="e.g. 5.2" step="0.1" min="0" value="0">
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+                  <i data-lucide="plus-circle"></i> Add Activity Log
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Logged Exercises Table -->
+          <div class="col-12 glass-panel">
+            <div class="widget-header">
+              <h3>Today's Activities Log</h3>
+            </div>
+            <div class="custom-table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Time Period</th>
+                    <th>Duration</th>
+                    <th>Distance</th>
+                    <th>Calories Burned</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="today-workouts-table-body">
+                  <tr>
+                    <td colspan="6" style="text-align: center; color: hsl(var(--text-muted));">No activities logged today.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. BUDGET MEAL PLANNER VIEW -->
+      <section id="meals-view" class="view-section">
+        <div class="glass-panel" style="padding: 2rem;">
+          <h3 style="font-size: 1.35rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="utensils" style="color: hsl(var(--primary));"></i> Budget-Friendly Meal Planner
+          </h3>
+          <p style="color: hsl(var(--text-secondary)); font-size: 0.9rem; margin-bottom: 1.5rem;">
+            Enter your details to generate a highly affordable, custom meal recommendation and grocery checklist matched to your health goals.
+          </p>
+
+          <form id="meal-planner-form">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+              <div class="form-group">
+                <label class="form-label" for="meal-weight">Weight (kg)</label>
+                <input type="number" id="meal-weight" class="form-control" placeholder="e.g. 70" min="30" max="250" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="meal-height">Height (cm)</label>
+                <input type="number" id="meal-height" class="form-control" placeholder="e.g. 175" min="100" max="250" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="meal-goal">Primary Health Goal</label>
+                <select id="meal-goal" class="form-control form-select">
+                  <option value="lose">Weight Loss (Caloric Deficit)</option>
+                  <option value="maintain">Maintain Weight</option>
+                  <option value="gain">Muscle Gain (Caloric Surplus)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="meal-diet">Dietary Selection</label>
+                <select id="meal-diet" class="form-control form-select">
+                  <option value="veg">Vegetarian</option>
+                  <option value="nonveg">Non-Vegetarian</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+              <div class="form-group">
+                <label class="form-label" for="meal-pref">Food Preference</label>
+                <select id="meal-pref" class="form-control form-select">
+                  <option value="balanced">Balanced Meals</option>
+                  <option value="highprotein">High Protein / Gym Focus</option>
+                  <option value="lowcarb">Low Carb / Keto Style</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="meal-allergy">Allergies / Restrictions</label>
+                <select id="meal-allergy" class="form-control form-select">
+                  <option value="none">None</option>
+                  <option value="nuts">Nut Free</option>
+                  <option value="gluten">Gluten Free</option>
+                  <option value="dairy">Lactose Free</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="meal-budget">Weekly Grocery Budget ($)</label>
+                <input type="number" id="meal-budget" class="form-control" placeholder="e.g. 80" min="10" required>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem;">
+              <i data-lucide="sparkles"></i> Generate Optimized Meal Plan & Grocery List
+            </button>
+          </form>
+        </div>
+
+        <!-- Meal plan results container (generated dynamically via mealPlanner.js) -->
+        <div id="meal-plan-results-area" style="display: none;">
+          <div class="meal-plan-result">
+            <!-- Meal Suggestions -->
+            <div class="meal-cards-container">
+              <div class="glass-panel" style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <h3 style="font-size: 1.25rem;">Generated Daily Menu</h3>
+                  <p id="meal-calories-summary" style="font-size: 0.85rem; color: hsl(var(--text-secondary));">Daily Targets: 2200 kcal | 120g Protein</p>
+                </div>
+                <div class="badge badge-steps" id="meal-pricing-badge">Budget Target Met</div>
+              </div>
+
+              <!-- Breakfast Card -->
+              <div class="meal-card-item glass-panel">
+                <div class="meal-time-tag">Breakfast</div>
+                <div class="meal-details">
+                  <h4 class="meal-name" id="meal-breakfast-name">Oatmeal with Fruits</h4>
+                  <p class="meal-ingredients" id="meal-breakfast-ingredients">Ingredients: Oats, milk, banana, honey, almonds</p>
+                  <div class="meal-macros">
+                    <span><i data-lucide="flame" style="width:12px; height:12px; display:inline;"></i> <span id="meal-breakfast-cals">420</span> kcal</span>
+                    <span><i data-lucide="dumbbell" style="width:12px; height:12px; display:inline;"></i> <span id="meal-breakfast-protein">15</span>g Protein</span>
+                    <span>Est. Cost: <span id="meal-breakfast-cost">$1.50</span></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Lunch Card -->
+              <div class="meal-card-item glass-panel">
+                <div class="meal-time-tag">Lunch</div>
+                <div class="meal-details">
+                  <h4 class="meal-name" id="meal-lunch-name">Brown Rice & Lentil Salad</h4>
+                  <p class="meal-ingredients" id="meal-lunch-ingredients">Ingredients: Brown rice, yellow split-lentils, cucumber, tomatoes, olive oil</p>
+                  <div class="meal-macros">
+                    <span><i data-lucide="flame" style="width:12px; height:12px; display:inline;"></i> <span id="meal-lunch-cals">650</span> kcal</span>
+                    <span><i data-lucide="dumbbell" style="width:12px; height:12px; display:inline;"></i> <span id="meal-lunch-protein">22</span>g Protein</span>
+                    <span>Est. Cost: <span id="meal-lunch-cost">$2.20</span></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dinner Card -->
+              <div class="meal-card-item glass-panel">
+                <div class="meal-time-tag">Dinner</div>
+                <div class="meal-details">
+                  <h4 class="meal-name" id="meal-dinner-name">Paneer Stir Fry</h4>
+                  <p class="meal-ingredients" id="meal-dinner-ingredients">Ingredients: Paneer block, bell peppers, broccoli, whole wheat wraps</p>
+                  <div class="meal-macros">
+                    <span><i data-lucide="flame" style="width:12px; height:12px; display:inline;"></i> <span id="meal-dinner-cals">580</span> kcal</span>
+                    <span><i data-lucide="dumbbell" style="width:12px; height:12px; display:inline;"></i> <span id="meal-dinner-protein">28</span>g Protein</span>
+                    <span>Est. Cost: <span id="meal-dinner-cost">$2.80</span></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Snacks Card -->
+              <div class="meal-card-item glass-panel">
+                <div class="meal-time-tag">Snacks</div>
+                <div class="meal-details">
+                  <h4 class="meal-name" id="meal-snacks-name">Greek Yogurt & Apples</h4>
+                  <p class="meal-ingredients" id="meal-snacks-ingredients">Ingredients: Plain greek yogurt, apple slices, chia seeds</p>
+                  <div class="meal-macros">
+                    <span><i data-lucide="flame" style="width:12px; height:12px; display:inline;"></i> <span id="meal-snacks-cals">250</span> kcal</span>
+                    <span><i data-lucide="dumbbell" style="width:12px; height:12px; display:inline;"></i> <span id="meal-snacks-protein">12</span>g Protein</span>
+                    <span>Est. Cost: <span id="meal-snacks-cost">$1.10</span></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Weekly Grocery List -->
+            <div class="grocery-container glass-panel" style="padding: 1.5rem;">
+              <h3 style="font-size: 1.15rem; margin-bottom: 0.25rem;">Weekly Grocery Checklist</h3>
+              <p style="font-size: 0.8rem; color: hsl(var(--text-secondary));">Check off items as you buy them.</p>
+              
+              <ul class="grocery-list" id="grocery-checklist-container">
+                <!-- Checklist items added dynamically -->
+              </ul>
+
+              <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid hsl(var(--border-color)); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; font-size: 0.95rem;">Est. Weekly Cost:</span>
+                <span style="font-weight: 800; font-size: 1.25rem; color: hsl(var(--accent-steps));" id="grocery-total-cost">$0.00</span>
+              </div>
+              <button class="btn btn-secondary" id="grocery-print-btn" style="width: 100%; margin-top: 1rem;">
+                <i data-lucide="printer"></i> Print Grocery List
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. REMINDER SYSTEM VIEW -->
+      <section id="reminders-view" class="view-section">
+        <div class="reminder-grid">
+          <!-- Water Reminder Card -->
+          <div class="glass-panel reminder-card">
+            <div class="reminder-card-header">
+              <div class="reminder-card-title water">
+                <i data-lucide="glass-water"></i>
+                <div>
+                  <h4 style="font-size: 1.1rem; margin-bottom: 0.15rem;">Water Intake Reminder</h4>
+                  <p style="font-size: 0.75rem; color: hsl(var(--text-secondary));">Stay hydrated throughout the day</p>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="remind-water-toggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="reminder-card-body" id="remind-water-settings">
+              <div class="form-group" style="margin-bottom: 0.75rem;">
+                <label class="form-label" for="remind-water-interval">Interval (Hours)</label>
+                <select id="remind-water-interval" class="form-control form-select">
+                  <option value="1">Every 1 hour</option>
+                  <option value="2" selected>Every 2 hours</option>
+                  <option value="3">Every 3 hours</option>
+                  <option value="4">Every 4 hours</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" for="remind-water-amount">Daily Goal Target (mL)</label>
+                <input type="number" id="remind-water-amount" class="form-control" value="3000" min="1000">
+              </div>
+            </div>
+          </div>
+
+          <!-- Exercise Reminder Card -->
+          <div class="glass-panel reminder-card">
+            <div class="reminder-card-header">
+              <div class="reminder-card-title workout">
+                <i data-lucide="dumbbell"></i>
+                <div>
+                  <h4 style="font-size: 1.1rem; margin-bottom: 0.15rem;">Exercise Scheduler</h4>
+                  <p style="font-size: 0.75rem; color: hsl(var(--text-secondary));">Build your weekly gym splits</p>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="remind-workout-toggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="reminder-card-body" id="remind-workout-settings">
+              <div style="font-size: 0.8rem; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.50rem;">
+                <div><strong>Mon:</strong> Chest</div>
+                <div><strong>Tue:</strong> Back</div>
+                <div><strong>Wed:</strong> Legs</div>
+                <div><strong>Thu:</strong> Cardio</div>
+                <div><strong>Fri:</strong> Shoulder</div>
+                <div><strong>Sat:</strong> Core</div>
+                <div><strong>Sun:</strong> Rest</div>
+              </div>
+              <p style="font-size: 0.75rem; color: hsl(var(--text-muted)); margin-top: 0.75rem;">
+                Reminders trigger daily to notify you about today's target muscle group.
+              </p>
+            </div>
+          </div>
+
+          <!-- Sleep Tracker Reminder Card -->
+          <div class="glass-panel reminder-card">
+            <div class="reminder-card-header">
+              <div class="reminder-card-title sleep">
+                <i data-lucide="moon"></i>
+                <div>
+                  <h4 style="font-size: 1.1rem; margin-bottom: 0.15rem;">Bedtime Reminder</h4>
+                  <p style="font-size: 0.75rem; color: hsl(var(--text-secondary));">Protect your sleep schedule</p>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="remind-sleep-toggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="reminder-card-body" id="remind-sleep-settings">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" for="remind-sleep-time">Bedtime Target</label>
+                <input type="time" id="remind-sleep-time" class="form-control" value="22:30">
+              </div>
+              <p style="font-size: 0.75rem; color: hsl(var(--text-muted)); margin-top: 0.75rem;">
+                Alerts prompt 30 minutes before sleep target to wind down.
+              </p>
+            </div>
+          </div>
+
+          <!-- Meal Times Reminder Card -->
+          <div class="glass-panel reminder-card">
+            <div class="reminder-card-header">
+              <div class="reminder-card-title meal">
+                <i data-lucide="utensils"></i>
+                <div>
+                  <h4 style="font-size: 1.1rem; margin-bottom: 0.15rem;">Meal Timings Alert</h4>
+                  <p style="font-size: 0.75rem; color: hsl(var(--text-secondary));">Nourish at consistent hours</p>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="remind-meal-toggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="reminder-card-body" id="remind-meal-settings">
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; font-size: 0.8rem;">
+                <div>
+                  <label class="form-label" style="font-size:0.7rem;" for="remind-breakfast-time">Breakfast</label>
+                  <input type="time" id="remind-breakfast-time" class="form-control" style="padding: 0.4rem 0.2rem; font-size: 0.8rem;" value="08:00">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.7rem;" for="remind-lunch-time">Lunch</label>
+                  <input type="time" id="remind-lunch-time" class="form-control" style="padding: 0.4rem 0.2rem; font-size: 0.8rem;" value="13:00">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:0.7rem;" for="remind-dinner-time">Dinner</label>
+                  <input type="time" id="remind-dinner-time" class="form-control" style="padding: 0.4rem 0.2rem; font-size: 0.8rem;" value="20:00">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Idle Sitting / Walking Reminder Card -->
+          <div class="glass-panel reminder-card">
+            <div class="reminder-card-header">
+              <div class="reminder-card-title walk">
+                <i data-lucide="footprints"></i>
+                <div>
+                  <h4 style="font-size: 1.1rem; margin-bottom: 0.15rem;">Sedentary Walk Reminder</h4>
+                  <p style="font-size: 0.75rem; color: hsl(var(--text-secondary));">Prevent long office sitting hours</p>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="remind-walk-toggle">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="reminder-card-body" id="remind-walk-settings">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" for="remind-walk-interval">Idle Sitting Limit (Minutes)</label>
+                <select id="remind-walk-interval" class="form-control form-select">
+                  <option value="30">Every 30 minutes</option>
+                  <option value="60" selected>Every 60 minutes</option>
+                  <option value="90">Every 90 minutes</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Global Reminder Save Status -->
+        <div style="margin-top: 1.5rem; text-align: right;">
+          <button class="btn btn-primary" id="save-reminders-settings-btn">
+            <i data-lucide="save"></i> Save Notification Preferences
+          </button>
+        </div>
+      </section>
+
+      <!-- 5. PROGRESS ANALYTICS VIEW -->
+      <section id="analytics-view" class="view-section">
+        <!-- Metric Overview Rows -->
+        <div class="dashboard-grid">
+          <!-- Weight Trend & BMI -->
+          <div class="col-6 glass-panel" style="padding: 1.5rem;">
+            <div class="widget-header">
+              <h3>Weight Trend & BMI</h3>
+              <span class="badge badge-steps" id="analytics-bmi-badge">BMI: 0.0</span>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-weight-bmi"></canvas>
+            </div>
+          </div>
+
+          <!-- Calories Consumed vs Burned -->
+          <div class="col-6 glass-panel" style="padding: 1.5rem;">
+            <div class="widget-header">
+              <h3>Energy Balance (Calories)</h3>
+              <i data-lucide="flame" style="color: hsl(var(--accent-calories));"></i>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-calories"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Steps & Water intake daily bars -->
+          <div class="col-8 glass-panel" style="padding: 1.5rem;">
+            <div class="widget-header">
+              <h3>Hydration vs Steps Tracker</h3>
+              <i data-lucide="activity" style="color: hsl(var(--accent-water));"></i>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-steps-water"></canvas>
+            </div>
+          </div>
+
+          <!-- Sleep Duration hours -->
+          <div class="col-4 glass-panel" style="padding: 1.5rem;">
+            <div class="widget-header">
+              <h3>Sleep Progress</h3>
+              <i data-lucide="moon" style="color: hsl(var(--accent-sleep));"></i>
+            </div>
+            <div class="chart-container">
+              <canvas id="chart-sleep"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. HISTORY LOGS VIEW -->
+      <section id="history-view" class="view-section">
+        <div class="glass-panel" style="padding: 1.5rem;">
+          <div class="widget-header">
+            <h3>Historical Progress Records</h3>
+            <div class="header-actions">
+              <button class="btn btn-secondary" id="export-history-pdf">
+                <i data-lucide="file-text"></i> Export Health Report (PDF)
+              </button>
+            </div>
+          </div>
+
+          <div class="history-filters">
+            <button class="history-filter-btn active" data-filter="daily">Daily Records</button>
+            <button class="history-filter-btn" data-filter="weekly">Weekly Summary</button>
+            <button class="history-filter-btn" data-filter="monthly">Monthly Summary</button>
+            <button class="history-filter-btn" data-filter="yearly">Yearly Summary</button>
+          </div>
+
+          <div class="custom-table-container">
+            <table class="custom-table">
+              <thead>
+                <tr id="history-table-headers">
+                  <th>Date</th>
+                  <th>Steps</th>
+                  <th>Water</th>
+                  <th>Cals Consumed</th>
+                  <th>Cals Burned</th>
+                  <th>Sleep Hours</th>
+                  <th>Weight</th>
+                  <th>Workouts Logged</th>
+                </tr>
+              </thead>
+              <tbody id="history-table-body">
+                <!-- Populated dynamically via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. PROFILE & SETTINGS VIEW -->
+      <section id="profile-view" class="view-section">
+        <div class="glass-panel" style="padding: 2.5rem;">
+          <div class="profile-grid">
+            <!-- Left Avatar Column -->
+            <div class="profile-avatar-uploader">
+              <div class="profile-avatar-big" id="profile-avatar-display">TP</div>
+              <h3 id="profile-display-name" style="margin-top: 0.5rem; text-align: center;">Tarakanta Parida</h3>
+              <p style="color: hsl(var(--text-secondary)); font-size: 0.8rem; text-align: center; text-transform: uppercase;">Health Enthusiast</p>
+            </div>
+
+            <!-- Right Profile Form Column -->
+            <div>
+              <form id="profile-settings-form">
+                <h3 style="font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid hsl(var(--border-color)); padding-bottom: 0.5rem;">
+                  Personal Dimensions
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                  <div class="form-group">
+                    <label class="form-label" for="profile-name">Full Name</label>
+                    <input type="text" id="profile-name" class="form-control" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="profile-gender">Gender</label>
+                    <select id="profile-gender" class="form-control form-select">
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="profile-age">Age (Years)</label>
+                    <input type="number" id="profile-age" class="form-control" min="1" max="120" required>
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                  <div class="form-group">
+                    <label class="form-label" for="profile-weight">Current Weight (kg)</label>
+                    <input type="number" id="profile-weight" class="form-control" step="0.1" min="30" max="300" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="profile-height">Height (cm)</label>
+                    <input type="number" id="profile-height" class="form-control" min="100" max="250" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="profile-goal">Daily Goal Intent</label>
+                    <select id="profile-goal" class="form-control form-select">
+                      <option value="lose">Weight Loss (Caloric Deficit)</option>
+                      <option value="maintain">Maintain Weight</option>
+                      <option value="gain">Weight/Muscle Gain</option>
+                    </select>
+                  </div>
+                </div>
+
+                <h3 style="font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid hsl(var(--border-color)); padding-bottom: 0.5rem;">
+                  Daily Targets Configuration
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                  <div class="form-group">
+                    <label class="form-label" for="profile-target-steps">Daily Steps Target</label>
+                    <input type="number" id="profile-target-steps" class="form-control" min="1000" step="500" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="profile-target-water">Daily Water Target (mL)</label>
+                    <input type="number" id="profile-target-water" class="form-control" min="500" step="250" required>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="profile-target-sleep">Daily Sleep Target (Hours)</label>
+                    <input type="number" id="profile-target-sleep" class="form-control" min="4" max="16" step="0.5" required>
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="float: right;">
+                  <i data-lucide="check"></i> Update Profile Details
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- A. QUICK LOG BACKDROP MODAL -->
+  <div id="quick-log-modal" class="modal-backdrop">
+    <div class="modal-content glass-panel">
+      <div class="modal-header">
+        <h3 style="font-size: 1.25rem;">Log Daily Health Metrics</h3>
+        <button class="modal-close" id="close-quick-log-modal">&times;</button>
+      </div>
+      <form id="quick-log-metrics-form">
+        <div class="form-group row-group">
+          <div>
+            <label class="form-label" for="quick-water-input">Hydrate Water (mL)</label>
+            <input type="number" id="quick-water-input" class="form-control" placeholder="+250 or +500" step="50" min="0">
+          </div>
+          <div>
+            <label class="form-label" for="quick-calories-input">Calories Consumed (kcal)</label>
+            <input type="number" id="quick-calories-input" class="form-control" placeholder="e.g. 450" min="0">
+          </div>
+        </div>
+        <div class="form-group row-group">
+          <div>
+            <label class="form-label" for="quick-sleep-input">Sleep Duration (Hours)</label>
+            <input type="number" id="quick-sleep-input" class="form-control" placeholder="e.g. 7.5" step="0.1" min="0" max="24">
+          </div>
+          <div>
+            <label class="form-label" for="quick-weight-input">Log Weight (kg)</label>
+            <input type="number" id="quick-weight-input" class="form-control" placeholder="e.g. 68.5" step="0.1" min="30">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+          Save Logging Metrics
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
