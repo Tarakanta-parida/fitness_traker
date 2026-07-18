@@ -1,17 +1,37 @@
 {
-  "name": "lifetrack-workspace",
-  "version": "1.0.0",
-  "description": "Root workspace workspace to launch frontend and backend development servers concurrently",
+  "name": "personal_fitnees",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
-    "dev:backend": "npm run dev --prefix backend",
-    "dev:frontend": "npm run dev --prefix frontend",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "install:all": "npm install --prefix backend && npm install --prefix frontend",
-    "build:all": "npm run build --prefix backend && npm run build --prefix frontend",
-    "build": "npm run build:all"
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "concurrently": "^8.2.2"
+    "@prisma/client": "^5.22.0",
+    "@tanstack/react-query": "^5.101.2",
+    "bcryptjs": "^3.0.3",
+    "canvas-confetti": "^1.9.4",
+    "framer-motion": "^12.42.2",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.24.0",
+    "next": "14.2.35",
+    "react": "^18",
+    "react-dom": "^18",
+    "recharts": "^3.9.2"
   },
-  "private": true
+  "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.35",
+    "postcss": "^8",
+    "prisma": "^5.22.0",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
 }
