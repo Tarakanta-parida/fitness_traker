@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
-import { Sparkles, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Sparkles, Eye, EyeOff, Loader2, X, Check } from "lucide-react";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -15,6 +15,21 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Forgot password states
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  const handleForgotSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setTimeout(() => {
+      setForgotSent(true);
+      setForgotLoading(false);
+    }, 1200);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,9 +145,13 @@ export default function LoginPage() {
                 </label>
               </div>
 
-              <div className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(true)}
+                className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer focus:outline-none"
+              >
                 Forgot your password?
-              </div>
+              </button>
             </div>
 
             <div>
@@ -171,6 +190,74 @@ export default function LoginPage() {
           </div>
         </motion.div>
       </div>
+
+      {showForgotModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-3xl p-6 shadow-2xl max-w-sm w-full border border-gray-100 space-y-4"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="font-bold text-base text-gray-800">Reset Password</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Enter your account email to receive reset link.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotModal(false);
+                  setForgotSent(false);
+                  setForgotEmail("");
+                }}
+                className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {forgotSent ? (
+              <div className="py-4 text-center space-y-2">
+                <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center mx-auto text-green-600">
+                  <Check className="w-6 h-6" />
+                </div>
+                <h4 className="font-bold text-sm text-gray-800">Email Sent!</h4>
+                <p className="text-xs text-gray-505 max-w-xs mx-auto leading-relaxed">
+                  Reset instructions were sent to <span className="font-semibold text-gray-755">{forgotEmail}</span>. Please check your inbox.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-[10px] font-semibold text-gray-555 uppercase mb-1">Email address</label>
+                  <input
+                    type="email"
+                    required
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-xs bg-gray-50/20 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={forgotLoading}
+                  className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-md transition-all flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
+                >
+                  {forgotLoading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Reset Link"
+                  )}
+                </button>
+              </form>
+            )}
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
