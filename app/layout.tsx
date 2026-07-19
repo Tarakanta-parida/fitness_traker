@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/hooks/use-auth";
 import Sidebar from "@/components/navigation/Sidebar";
+import ReminderNotificationManager from "@/components/reminders/ReminderNotificationManager";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -56,6 +57,7 @@ export default function RootLayout({
               {children}
             </main>
           </div>
+          <ReminderNotificationManager />
         </AuthProvider>
       </body>
     </html>
