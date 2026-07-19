@@ -126,11 +126,11 @@ export default function DashboardPage() {
     let lastStepTime = 0;
     let isAboveThreshold = false;
 
-    // Rhythmic step verification parameters (highly optimized to filter out sitting hand shakes)
+    // Rhythmic step verification parameters (finely balanced to allow walking while blocking hand shakes)
     let uncommittedStepsCount = 0; // Steps detected but not yet validated as a walk sequence
-    const VERIFICATION_THRESHOLD = 10; // Requires 10 consecutive rhythmic steps to confirm walking (prevents casual shakes)
-    const MAX_STEP_INTERVAL = 1200; // Max 1.2s between steps (if exceeded, user has stopped/idle)
-    const MIN_STEP_INTERVAL = 450; // Min 450ms pace cooldown (ignores rapid phone shaking)
+    const VERIFICATION_THRESHOLD = 6; // Requires 6 consecutive rhythmic steps to confirm walking (prevents casual shakes)
+    const MAX_STEP_INTERVAL = 1800; // Max 1.8s between steps (allows slow walking/pacing)
+    const MIN_STEP_INTERVAL = 380; // Min 380ms pace cooldown (ignores rapid phone shaking)
 
     // Running average baseline tracking (calibrates to current gravity/tilt baseline)
     let runningAverage = 9.81;
@@ -160,7 +160,7 @@ export default function DashboardPage() {
       const now = Date.now();
 
       // 3. Dynamic delta threshold (requires a distinct vertical heel impact, ignoring gentle hand gestures)
-      const stepDeltaThreshold = 1.20; 
+      const stepDeltaThreshold = 0.85; 
 
       // Trigger candidate step if acceleration spikes above baseline gravity, with strict interval checks
       if (!isAboveThreshold && (smoothedMagnitude - runningAverage) > stepDeltaThreshold && (now - lastStepTime) > MIN_STEP_INTERVAL) {
@@ -168,7 +168,7 @@ export default function DashboardPage() {
         const interval = now - lastStepTime;
         lastStepTime = now;
 
-        // Check if the step fits a continuous walking rhythm (under 1.2s interval)
+        // Check if the step fits a continuous walking rhythm (under 1.8s interval)
         if (interval > MAX_STEP_INTERVAL) {
           // Rhythm was broken or first step. Start a new potential walk sequence
           uncommittedStepsCount = 1;
@@ -177,7 +177,7 @@ export default function DashboardPage() {
           uncommittedStepsCount += 1;
 
           if (uncommittedStepsCount === VERIFICATION_THRESHOLD) {
-            // Rhythmic walk verified! Commit all 10 accumulated steps to the UI at once
+            // Rhythmic walk verified! Commit all 6 accumulated steps to the UI at once
             setData(prevData => {
               if (!prevData) return null;
               const nextSteps = prevData.steps + VERIFICATION_THRESHOLD;
