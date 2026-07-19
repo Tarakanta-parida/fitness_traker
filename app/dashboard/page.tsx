@@ -119,26 +119,24 @@ export default function DashboardPage() {
   const [sleepQuality, setSleepQuality] = useState("good");
   const [sleepLoading, setSleepLoading] = useState(false);
 
-  // Real-time Motion Step Tracker Effect (Self-calibrating baseline dynamic pedometer with rhythmic walk validation)
+  // Real-time Motion Step Tracker Effect (Self-calibrating gravity-aligned vector projection pedometer)
   useEffect(() => {
     if (!isTrackingSteps || !data) return;
 
     let lastStepTime = 0;
     let isAboveThreshold = false;
 
-    // Rhythmic step verification parameters (finely balanced to allow walking while blocking hand shakes)
+    // Rhythmic step verification parameters
     let uncommittedStepsCount = 0; // Steps detected but not yet validated as a walk sequence
     const VERIFICATION_THRESHOLD = 6; // Requires 6 consecutive rhythmic steps to confirm walking (prevents casual shakes)
     const MAX_STEP_INTERVAL = 1800; // Max 1.8s between steps (allows slow walking/pacing)
     const MIN_STEP_INTERVAL = 380; // Min 380ms pace cooldown (ignores rapid phone shaking)
 
-    // Running average baseline tracking (calibrates to current gravity/tilt baseline)
-    let runningAverage = 9.81;
-    const beta = 0.015; // Slow adaptation rate
-
-    // Exponential smoothing factor for low-pass filter (removes high-frequency jitter)
-    const alpha = 0.22;
-    let smoothedMagnitude = 9.81;
+    // Dynamic 3D gravity baseline estimation (tracks current earth gravity orientation)
+    let avgX = 0;
+    let avgY = 9.81;
+    let avgZ = 0;
+    let gravityInitialized = false;
 
     const handleMotion = (event: DeviceMotionEvent) => {
       const accel = event.accelerationIncludingGravity;
@@ -148,22 +146,43 @@ export default function DashboardPage() {
       const y = accel.y || 0;
       const z = accel.z || 0;
 
-      // 3D Magnitude of current acceleration vector
-      const currentMagnitude = Math.sqrt(x * x + y * y + z * z);
+      // 1. Initialize baseline gravity vector on first measurement
+      if (!gravityInitialized) {
+        avgX = x;
+        avgY = y;
+        avgZ = z;
+        gravityInitialized = true;
+        return;
+      }
 
-      // 1. Apply low-pass filter to smooth out sensor tremors
-      smoothedMagnitude = (smoothedMagnitude * (1 - alpha)) + (currentMagnitude * alpha);
+      // 2. Slow-adapt the direction of the gravity vector (beta = 0.02)
+      avgX = avgX * 0.98 + x * 0.02;
+      avgY = avgY * 0.98 + y * 0.02;
+      avgZ = avgZ * 0.98 + z * 0.02;
 
-      // 2. Slow-adapt the baseline gravity average (adjusts dynamically if user changes orientation)
-      runningAverage = (runningAverage * (1 - beta)) + (currentMagnitude * beta);
+      // Gravity vector magnitude (normally ~9.81 m/s^2)
+      const gravMag = Math.sqrt(avgX * avgX + avgY * avgY + avgZ * avgZ) || 9.81;
+
+      // 3. Normalize gravity vector components
+      const uX = avgX / gravMag;
+      const uY = avgY / gravMag;
+      const uZ = avgZ / gravMag;
+
+      // 4. Dot-product: Project current acceleration vector onto Earth gravity vector
+      // This isolates the pure vertical acceleration component (up/down relative to Earth), ignoring horizontal shakes!
+      const verticalAccel = x * uX + y * uY + z * uZ;
 
       const now = Date.now();
 
-      // 3. Dynamic delta threshold (requires a distinct vertical heel impact, ignoring gentle hand gestures)
-      const stepDeltaThreshold = 0.85; 
+      // 5. Walking step threshold definitions:
+      // Real steps cause vertical deceleration followed by rebound impact (ranges from 1.1 to 3.0 m/s^2 above gravity)
+      const stepUpperThreshold = gravMag + 1.15; 
+      const stepLowerThreshold = gravMag - 0.5;
 
-      // Trigger candidate step if acceleration spikes above baseline gravity, with strict interval checks
-      if (!isAboveThreshold && (smoothedMagnitude - runningAverage) > stepDeltaThreshold && (now - lastStepTime) > MIN_STEP_INTERVAL) {
+      // Shaking the phone violently produces large vertical forces (> 4.8 m/s^2 above gravity) which we filter out
+      const maxWalkingVertical = gravMag + 4.8;
+
+      if (!isAboveThreshold && verticalAccel > stepUpperThreshold && verticalAccel < maxWalkingVertical && (now - lastStepTime) > MIN_STEP_INTERVAL) {
         isAboveThreshold = true;
         const interval = now - lastStepTime;
         lastStepTime = now;
@@ -206,7 +225,7 @@ export default function DashboardPage() {
             setPendingStepsSync(prev => prev + 1);
           }
         }
-      } else if (isAboveThreshold && (smoothedMagnitude - runningAverage) < 0.25) {
+      } else if (isAboveThreshold && verticalAccel < stepLowerThreshold) {
         // Return below threshold (foot strike recovery phase)
         isAboveThreshold = false;
       }
