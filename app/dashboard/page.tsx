@@ -54,8 +54,14 @@ export default function DashboardPage() {
   const [quickSteps, setQuickSteps] = useState("");
   const [stepsLoading, setStepsLoading] = useState(false);
 
-  // Real-time Motion Step Tracking state
-  const [isTrackingSteps, setIsTrackingSteps] = useState(false);
+  // Real-time Motion Step Tracking state (defaults to true / always on)
+  const [isTrackingSteps, setIsTrackingSteps] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("step_tracking_enabled");
+      return saved !== "false"; // Defaults to true if not set
+    }
+    return true;
+  });
   const [stepPermissionGranted, setStepPermissionGranted] = useState(false);
   const [pendingStepsSync, setPendingStepsSync] = useState(0);
 
@@ -200,6 +206,7 @@ export default function DashboardPage() {
         setPendingStepsSync(0);
       }
       setIsTrackingSteps(false);
+      localStorage.setItem("step_tracking_enabled", "false");
     } else {
       // Turn on: Request permissions if required (Safari/iOS compatibility)
       const DeviceMotionEventClass = (window as any).DeviceMotionEvent;
@@ -212,6 +219,7 @@ export default function DashboardPage() {
           if (permissionState === "granted") {
             setStepPermissionGranted(true);
             setIsTrackingSteps(true);
+            localStorage.setItem("step_tracking_enabled", "true");
           } else {
             alert("Motion permission denied. Cannot auto-count steps.");
           }
@@ -223,6 +231,7 @@ export default function DashboardPage() {
         // Android/Chrome grants permission implicitly
         setStepPermissionGranted(true);
         setIsTrackingSteps(true);
+        localStorage.setItem("step_tracking_enabled", "true");
       }
     }
   };
