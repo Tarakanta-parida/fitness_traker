@@ -143,47 +143,47 @@ export default function RemindersPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-gray-800 text-base">Water Intake Reminders</h3>
-                {waterRem && (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                    waterRem.enabled ? "text-green-600 bg-green-50/50" : "text-gray-400 bg-gray-50/50"
-                  }`}>
-                    {waterRem.enabled ? "Enabled" : "Disabled"}
-                  </span>
-                )}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                  waterRem?.enabled ? "text-green-600 bg-green-50/50" : "text-gray-400 bg-gray-50/50"
+                }`}>
+                  {waterRem?.enabled ? "Enabled" : "Disabled"}
+                </span>
               </div>
               <p className="text-xs text-gray-500 mt-1 max-w-md">
                 Alerts you throughout the day to drink water and reach your daily target of 10 glasses.
               </p>
-              {waterRem?.enabled && (
-                <div className="flex items-center gap-2 mt-4">
-                  <span className="text-xs text-gray-500">Frequency:</span>
-                  <select
-                    value={waterInterval}
-                    onChange={(e) => setWaterInterval(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs bg-white focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="1">Every Hour</option>
-                    <option value="2">Every 2 Hours</option>
-                    <option value="3">Every 3 Hours</option>
-                  </select>
-                </div>
-              )}
+              <div className="flex items-center gap-2 mt-4">
+                <span className="text-xs text-gray-500">Frequency:</span>
+                <select
+                  value={waterInterval}
+                  onChange={(e) => setWaterInterval(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs bg-white focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="1">Every Hour</option>
+                  <option value="2">Every 2 Hours</option>
+                  <option value="3">Every 3 Hours</option>
+                </select>
+              </div>
             </div>
           </div>
 
           <div className="flex gap-3 w-full md:w-auto justify-end border-t md:border-none pt-4 md:pt-0">
-            {waterRem && (
-              <button
-                onClick={() => handleToggle(waterRem.id, waterRem.enabled)}
-                className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all border ${
-                  waterRem.enabled 
-                    ? "bg-gray-50 border-gray-200 text-gray-650 hover:bg-gray-100" 
-                    : "bg-blue-50 border-blue-100/50 text-blue-600 hover:bg-blue-100/50"
-                }`}
-              >
-                {waterRem.enabled ? "Disable" : "Enable"}
-              </button>
-            )}
+            <button
+              onClick={() => {
+                if (waterRem) {
+                  handleToggle(waterRem.id, waterRem.enabled);
+                } else {
+                  handleSaveReminder("WATER", "08:00", `interval_${waterInterval}h`);
+                }
+              }}
+              className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all border ${
+                waterRem?.enabled 
+                  ? "bg-gray-50 border-gray-200 text-gray-650 hover:bg-gray-100" 
+                  : "bg-blue-50 border-blue-100/50 text-blue-600 hover:bg-blue-100/50"
+              }`}
+            >
+              {waterRem?.enabled ? "Disable" : "Enable"}
+            </button>
             <button
               onClick={() => handleSaveReminder("WATER", "08:00", `interval_${waterInterval}h`)}
               disabled={saving === "WATER"}
@@ -204,45 +204,45 @@ export default function RemindersPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-gray-800 text-base">Exercise Routine Reminders</h3>
-                {workoutRem && (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                    workoutRem.enabled ? "text-green-600 bg-green-50/50" : "text-gray-400 bg-gray-50/50"
-                  }`}>
-                    {workoutRem.enabled ? "Enabled" : "Disabled"}
-                  </span>
-                )}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                  workoutRem?.enabled ? "text-green-600 bg-green-50/50" : "text-gray-400 bg-gray-50/50"
+                }`}>
+                  {workoutRem?.enabled ? "Enabled" : "Disabled"}
+                </span>
               </div>
               <p className="text-xs text-gray-500 mt-1 max-w-md">
                 Alerts you at your preferred exercise hour to complete your daily activity routines.
               </p>
               
-              {workoutRem?.enabled && (
-                <div className="flex items-center gap-2 mt-4">
-                  <span className="text-xs text-gray-500">Reminder Time:</span>
-                  <input
-                    type="time"
-                    value={workoutTime}
-                    onChange={(e) => setWorkoutTime(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs bg-white focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              )}
+              <div className="flex items-center gap-2 mt-4">
+                <span className="text-xs text-gray-500">Reminder Time:</span>
+                <input
+                  type="time"
+                  value={workoutTime}
+                  onChange={(e) => setWorkoutTime(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs bg-white focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
             </div>
           </div>
 
           <div className="flex gap-3 w-full md:w-auto justify-end border-t md:border-none pt-4 md:pt-0">
-            {workoutRem && (
-              <button
-                onClick={() => handleToggle(workoutRem.id, workoutRem.enabled)}
-                className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all border ${
-                  workoutRem.enabled 
-                    ? "bg-gray-50 border-gray-200 text-gray-650 hover:bg-gray-100" 
-                    : "bg-blue-50 border-blue-100/50 text-blue-600 hover:bg-blue-100/50"
-                }`}
-              >
-                {workoutRem.enabled ? "Disable" : "Enable"}
-              </button>
-            )}
+            <button
+              onClick={() => {
+                if (workoutRem) {
+                  handleToggle(workoutRem.id, workoutRem.enabled);
+                } else {
+                  handleSaveReminder("WORKOUT", workoutTime, "daily");
+                }
+              }}
+              className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all border ${
+                workoutRem?.enabled 
+                  ? "bg-gray-50 border-gray-200 text-gray-650 hover:bg-gray-100" 
+                  : "bg-blue-50 border-blue-100/50 text-blue-600 hover:bg-blue-100/50"
+              }`}
+            >
+              {workoutRem?.enabled ? "Disable" : "Enable"}
+            </button>
             <button
               onClick={() => handleSaveReminder("WORKOUT", workoutTime, "daily")}
               disabled={saving === "WORKOUT"}
@@ -263,45 +263,45 @@ export default function RemindersPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-gray-800 text-base">Bedtime Reminders</h3>
-                {sleepRem && (
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                    sleepRem.enabled ? "text-green-600 bg-green-50/50" : "text-gray-400 bg-gray-50/50"
-                  }`}>
-                    {sleepRem.enabled ? "Enabled" : "Disabled"}
-                  </span>
-                )}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                  sleepRem?.enabled ? "text-green-600 bg-green-50/50" : "text-gray-400 bg-gray-50/50"
+                }`}>
+                  {sleepRem?.enabled ? "Enabled" : "Disabled"}
+                </span>
               </div>
               <p className="text-xs text-gray-500 mt-1 max-w-md">
                 Alerts you when it is time to unwind and log sleep quality, tracking targets of {user?.sleepTarget || 8} hours.
               </p>
               
-              {sleepRem?.enabled && (
-                <div className="flex items-center gap-2 mt-4">
-                  <span className="text-xs text-gray-500">Bedtime:</span>
-                  <input
-                    type="time"
-                    value={sleepTime}
-                    onChange={(e) => setSleepTime(e.target.value)}
-                    className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs bg-white focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-              )}
+              <div className="flex items-center gap-2 mt-4">
+                <span className="text-xs text-gray-500">Bedtime:</span>
+                <input
+                  type="time"
+                  value={sleepTime}
+                  onChange={(e) => setSleepTime(e.target.value)}
+                  className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs bg-white focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
             </div>
           </div>
 
           <div className="flex gap-3 w-full md:w-auto justify-end border-t md:border-none pt-4 md:pt-0">
-            {sleepRem && (
-              <button
-                onClick={() => handleToggle(sleepRem.id, sleepRem.enabled)}
-                className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all border ${
-                  sleepRem.enabled 
-                    ? "bg-gray-50 border-gray-200 text-gray-650 hover:bg-gray-100" 
-                    : "bg-blue-50 border-blue-100/50 text-blue-600 hover:bg-blue-100/50"
-                }`}
-              >
-                {sleepRem.enabled ? "Disable" : "Enable"}
-              </button>
-            )}
+            <button
+              onClick={() => {
+                if (sleepRem) {
+                  handleToggle(sleepRem.id, sleepRem.enabled);
+                } else {
+                  handleSaveReminder("SLEEP", sleepTime, "daily");
+                }
+              }}
+              className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all border ${
+                sleepRem?.enabled 
+                  ? "bg-gray-50 border-gray-200 text-gray-650 hover:bg-gray-100" 
+                  : "bg-blue-50 border-blue-100/50 text-blue-600 hover:bg-blue-100/50"
+              }`}
+            >
+              {sleepRem?.enabled ? "Disable" : "Enable"}
+            </button>
             <button
               onClick={() => handleSaveReminder("SLEEP", sleepTime, "daily")}
               disabled={saving === "SLEEP"}
