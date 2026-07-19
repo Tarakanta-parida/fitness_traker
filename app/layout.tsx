@@ -32,6 +32,17 @@ export default function RootLayout({
                     document.body.classList.add('theme-' + theme);
                   }
                 } catch (e) {}
+
+                // Register PWA Service Worker
+                if ('serviceWorker' in navigator) {
+                  window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                      console.log('PWA Service Worker registered successfully:', reg.scope);
+                    }).catch(function(err) {
+                      console.log('PWA Service Worker registration failed:', err);
+                    });
+                  });
+                }
               })();
             `,
           }}

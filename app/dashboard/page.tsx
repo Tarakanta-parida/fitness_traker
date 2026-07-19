@@ -15,7 +15,8 @@ import {
   Award,
   ChevronRight,
   TrendingDown,
-  Loader2
+  Loader2,
+  Download
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
@@ -57,6 +58,41 @@ export default function DashboardPage() {
   const [isTrackingSteps, setIsTrackingSteps] = useState(false);
   const [stepPermissionGranted, setStepPermissionGranted] = useState(false);
   const [pendingStepsSync, setPendingStepsSync] = useState(0);
+
+  // PWA Install State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      // Prevent default browser install dialog
+      e.preventDefault();
+      // Store event for triggering installation later
+      setDeferredPrompt(e);
+      // Update UI to render the custom install promo card
+      setIsInstallable(true);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    // Turn off install offer if already running inside app standalone mode
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setIsInstallable(false);
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User prompt installation outcome: ${outcome}`);
+    setDeferredPrompt(null);
+    setIsInstallable(false);
+  };
   
   const [showMealInput, setShowMealInput] = useState(false);
   const [mealName, setMealName] = useState("");
@@ -446,6 +482,38 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* PWA Install Promo Banner */}
+      {isInstallable && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-blue-600 via-indigo-650 to-blue-700 text-white rounded-3xl p-6 shadow-md flex flex-col md:flex-row justify-between items-center gap-4 border border-blue-500/20"
+        >
+          <div>
+            <h3 className="font-extrabold text-base flex items-center gap-2">
+              <Download className="w-5 h-5 animate-bounce text-blue-200" /> Download & Install LifeTrack App
+            </h3>
+            <p className="text-xs text-blue-100 mt-1 max-w-xl">
+              Save this web tracking dashboard directly to your mobile home screen or computer dock. Get instant launcher access and offline caching metrics!
+            </p>
+          </div>
+          <div className="flex gap-3 w-full md:w-auto">
+            <button
+              onClick={handleInstallApp}
+              className="px-5 py-2.5 bg-white text-blue-700 rounded-2xl text-xs font-bold shadow-md hover:bg-blue-50 transition-all flex-1 md:flex-none text-center"
+            >
+              Install App
+            </button>
+            <button
+              onClick={() => setIsInstallable(false)}
+              className="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-2xl text-xs font-semibold transition-all"
+            >
+              Later
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Hero Analytics Ring & Quick Stats */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
