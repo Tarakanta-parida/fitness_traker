@@ -24,16 +24,102 @@ interface ReminderItem {
   enabled: boolean;
 }
 
+// Real-time countdown helper for time-based reminders (Workout, Sleep)
+function getCountdownToTime(targetTimeStr: string): string {
+  if (!targetTimeStr) return "";
+  const [targetHrs, targetMins] = targetTimeStr.split(":").map(Number);
+  
+  const now = new Date();
+  const target = new Date();
+  target.setHours(targetHrs, targetMins, 0, 0);
+  
+  if (target.getTime() <= now.getTime()) {
+    // If target has passed today, set to tomorrow
+    target.setDate(target.getDate() + 1);
+  }
+  
+  const diffMs = target.getTime() - now.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  
+  const hrs = Math.floor(diffSecs / 3600);
+  const mins = Math.floor((diffSecs % 3600) / 60);
+  const secs = diffSecs % 60;
+  
+  if (hrs > 0) {
+    return `${hrs}h ${mins}m ${secs}s`;
+  }
+  return `${mins}m ${secs}s`;
+}
+
+// Real-time countdown helper for frequency-based water reminders (8:00 AM - 10:00 PM window)
+function getCountdownToWater(intervalHrsStr: string): string {
+  const intervalHrs = parseInt(intervalHrsStr.match(/\d+/) ? intervalHrsStr.match(/\d+/)![0] : "2");
+  const now = new Date();
+  const hourNum = now.getHours();
+  
+  const START_HOUR = 8;
+  const END_HOUR = 22;
+  
+  let next = new Date();
+  next.setMinutes(0, 0, 0);
+  
+  if (hourNum < START_HOUR) {
+    next.setHours(START_HOUR);
+  } else if (hourNum >= END_HOUR) {
+    next.setDate(next.getDate() + 1);
+    next.setHours(START_HOUR);
+  } else {
+    let nextHour = hourNum;
+    if (now.getMinutes() > 0 || now.getSeconds() > 0) {
+      nextHour += 1;
+    }
+    while (nextHour % intervalHrs !== 0 || nextHour < START_HOUR) {
+      nextHour += 1;
+      if (nextHour > END_HOUR) {
+        break;
+      }
+    }
+    if (nextHour > END_HOUR) {
+      next.setDate(next.getDate() + 1);
+      next.setHours(START_HOUR);
+    } else {
+      next.setHours(nextHour);
+    }
+  }
+  
+  const diffMs = next.getTime() - now.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  
+  const hrs = Math.floor(diffSecs / 3600);
+  const mins = Math.floor((diffSecs % 3600) / 60);
+  const secs = diffSecs % 60;
+  
+  if (hrs > 0) {
+    return `${hrs}h ${mins}m ${secs}s`;
+  }
+  return `${mins}m ${secs}s`;
+}
+
 export default function RemindersPage() {
   const { user } = useAuth();
   const [reminders, setReminders] = useState<ReminderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
 
+  // Live countdown ticker state
+  const [ticker, setTicker] = useState(0);
+
   // Quick form configurations
   const [waterInterval, setWaterInterval] = useState("2");
   const [workoutTime, setWorkoutTime] = useState("08:00");
   const [sleepTime, setSleepTime] = useState("22:00");
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTicker(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
   
   const fetchReminders = async () => {
     try {
@@ -141,13 +227,18 @@ export default function RemindersPage() {
               <Droplet className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-bold text-gray-800 text-base">Water Intake Reminders</h3>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
                   waterRem?.enabled ? "text-green-600 bg-green-50/50" : "text-gray-400 bg-gray-50/50"
                 }`}>
                   {waterRem?.enabled ? "Enabled" : "Disabled"}
                 </span>
+                {waterRem?.enabled && (
+                  <span className="text-[10px] font-extrabold text-blue-600 bg-blue-50/60 px-2 py-0.5 rounded-full flex items-center gap-1 border border-blue-100/50 animate-pulse">
+                    ⏰ Alert in: {getCountdownToWater(waterInterval)}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-gray-500 mt-1 max-w-md">
                 Alerts you throughout the day to drink water and reach your daily target of 10 glasses.
@@ -202,13 +293,18 @@ export default function RemindersPage() {
               <Activity className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-bold text-gray-800 text-base">Exercise Routine Reminders</h3>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
                   workoutRem?.enabled ? "text-green-600 bg-green-50/50" : "text-gray-400 bg-gray-50/50"
                 }`}>
                   {workoutRem?.enabled ? "Enabled" : "Disabled"}
                 </span>
+                {workoutRem?.enabled && (
+                  <span className="text-[10px] font-extrabold text-green-650 bg-green-50/60 px-2 py-0.5 rounded-full flex items-center gap-1 border border-green-100/50 animate-pulse">
+                    ⏰ Alert in: {getCountdownToTime(workoutTime)}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-gray-500 mt-1 max-w-md">
                 Alerts you at your preferred exercise hour to complete your daily activity routines.
@@ -261,13 +357,18 @@ export default function RemindersPage() {
               <Moon className="w-6 h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-bold text-gray-800 text-base">Bedtime Reminders</h3>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
                   sleepRem?.enabled ? "text-green-600 bg-green-50/50" : "text-gray-400 bg-gray-50/50"
                 }`}>
                   {sleepRem?.enabled ? "Enabled" : "Disabled"}
                 </span>
+                {sleepRem?.enabled && (
+                  <span className="text-[10px] font-extrabold text-purple-600 bg-purple-50/60 px-2 py-0.5 rounded-full flex items-center gap-1 border border-purple-100/50 animate-pulse">
+                    ⏰ Alert in: {getCountdownToTime(sleepTime)}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-gray-500 mt-1 max-w-md">
                 Alerts you when it is time to unwind and log sleep quality, tracking targets of {user?.sleepTarget || 8} hours.
