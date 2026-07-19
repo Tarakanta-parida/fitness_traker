@@ -126,11 +126,11 @@ export default function DashboardPage() {
     let lastStepTime = 0;
     let isAboveThreshold = false;
 
-    // Rhythmic step verification parameters
+    // Rhythmic step verification parameters (highly optimized to filter out sitting hand shakes)
     let uncommittedStepsCount = 0; // Steps detected but not yet validated as a walk sequence
-    const VERIFICATION_THRESHOLD = 5; // Requires 5 rhythmic steps to verify walking has started
-    const MAX_STEP_INTERVAL = 1400; // Max 1.4s between steps (if exceeded, user has stopped/idle)
-    const MIN_STEP_INTERVAL = 380; // Min 380ms walk pace cooldown
+    const VERIFICATION_THRESHOLD = 10; // Requires 10 consecutive rhythmic steps to confirm walking (prevents casual shakes)
+    const MAX_STEP_INTERVAL = 1200; // Max 1.2s between steps (if exceeded, user has stopped/idle)
+    const MIN_STEP_INTERVAL = 450; // Min 450ms pace cooldown (ignores rapid phone shaking)
 
     // Running average baseline tracking (calibrates to current gravity/tilt baseline)
     let runningAverage = 9.81;
@@ -159,16 +159,16 @@ export default function DashboardPage() {
 
       const now = Date.now();
 
-      // 3. Dynamic delta threshold (steps typically bounce 0.95 m/s^2 above baseline gravity)
-      const stepDeltaThreshold = 0.95; 
+      // 3. Dynamic delta threshold (requires a distinct vertical heel impact, ignoring gentle hand gestures)
+      const stepDeltaThreshold = 1.20; 
 
-      // Trigger candidate step if acceleration spikes above baseline gravity, with a 380ms walk tempo cooldown
+      // Trigger candidate step if acceleration spikes above baseline gravity, with strict interval checks
       if (!isAboveThreshold && (smoothedMagnitude - runningAverage) > stepDeltaThreshold && (now - lastStepTime) > MIN_STEP_INTERVAL) {
         isAboveThreshold = true;
         const interval = now - lastStepTime;
         lastStepTime = now;
 
-        // Check if the step fits a continuous walking rhythm (under 1.4s interval)
+        // Check if the step fits a continuous walking rhythm (under 1.2s interval)
         if (interval > MAX_STEP_INTERVAL) {
           // Rhythm was broken or first step. Start a new potential walk sequence
           uncommittedStepsCount = 1;
@@ -177,15 +177,16 @@ export default function DashboardPage() {
           uncommittedStepsCount += 1;
 
           if (uncommittedStepsCount === VERIFICATION_THRESHOLD) {
-            // Rhythmic walk verified! Commit all 5 accumulated steps to the UI at once
+            // Rhythmic walk verified! Commit all 10 accumulated steps to the UI at once
             setData(prevData => {
               if (!prevData) return null;
               const nextSteps = prevData.steps + VERIFICATION_THRESHOLD;
+              const newKcal = parseFloat((prevData.caloriesBurned + (VERIFICATION_THRESHOLD * 0.04)).toFixed(2));
               return {
                 ...prevData,
                 steps: nextSteps,
                 distance: nextSteps * 0.000762,
-                caloriesBurned: prevData.caloriesBurned + (VERIFICATION_THRESHOLD * 0.04)
+                caloriesBurned: newKcal
               };
             });
             setPendingStepsSync(prev => prev + VERIFICATION_THRESHOLD);
@@ -194,11 +195,12 @@ export default function DashboardPage() {
             setData(prevData => {
               if (!prevData) return null;
               const nextSteps = prevData.steps + 1;
+              const newKcal = parseFloat((prevData.caloriesBurned + 0.04).toFixed(2));
               return {
                 ...prevData,
                 steps: nextSteps,
                 distance: nextSteps * 0.000762,
-                caloriesBurned: prevData.caloriesBurned + 0.04
+                caloriesBurned: newKcal
               };
             });
             setPendingStepsSync(prev => prev + 1);
@@ -611,7 +613,7 @@ export default function DashboardPage() {
               
               <div className="w-8 h-px bg-gray-100 my-1.5" />
               
-              <span className="text-xl font-black text-green-650 leading-none">{data.caloriesBurned}</span>
+              <span className="text-xl font-black text-green-650 leading-none">{data.caloriesBurned.toFixed(1)}</span>
               <span className="text-[9px] font-bold text-green-500 uppercase tracking-wider mt-0.5">Kcal</span>
             </div>
           </div>
@@ -674,7 +676,7 @@ export default function DashboardPage() {
             </div>
             <div className="mt-4">
               <span className="text-xs text-gray-400 font-semibold block">Active Burned</span>
-              <span className="text-2xl font-black text-gray-800 block mt-1">{data.caloriesBurned} kcal</span>
+              <span className="text-2xl font-black text-gray-800 block mt-1">{data.caloriesBurned.toFixed(1)} kcal</span>
               <span className="text-[11px] text-gray-500 mt-1 block">Workout Duration: {data.workoutMinutes} mins</span>
             </div>
           </div>
