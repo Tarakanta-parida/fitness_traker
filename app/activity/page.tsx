@@ -173,23 +173,6 @@ export default function ActivityPage() {
 
         <div className="flex gap-3">
           <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="flex items-center gap-2 px-5 py-3 border border-gray-200 hover:bg-gray-50 bg-white rounded-xl text-xs font-bold text-gray-700 shadow-sm transition-all disabled:opacity-50"
-          >
-            {syncing ? (
-              <>
-                <RotateCw className="w-4 h-4 animate-spin text-blue-500" />
-                Syncing Google Fit...
-              </>
-            ) : (
-              <>
-                <Smartphone className="w-4 h-4 text-blue-500" />
-                Sync Health Connect
-              </>
-            )}
-          </button>
-          <button
             onClick={() => setShowLogModal(true)}
             className="flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95"
           >
