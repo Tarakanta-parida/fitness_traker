@@ -13,12 +13,13 @@ import {
   Loader2,
   Check,
   ShieldAlert,
-  AlertCircle
+  AlertCircle,
+  LogOut
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
 export default function ProfilePage() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
   
   // Theme State
   const [activeTheme, setActiveTheme] = useState("light");
@@ -171,6 +172,14 @@ export default function ProfilePage() {
                 <span className="text-gray-400 font-semibold">Weekly Budget</span>
                 <span className="font-bold text-gray-800">${user?.budget ? Number(user.budget).toFixed(2) : "150.00"}</span>
               </div>
+              <button
+                type="button"
+                onClick={() => logout()}
+                className="w-full flex items-center justify-center gap-2 mt-4 px-4 py-2.5 bg-red-50 hover:bg-red-100/75 border border-red-100 text-red-655 rounded-2xl text-xs font-bold transition-all active:scale-95"
+              >
+                <LogOut className="w-4 h-4 text-red-500" />
+                Sign Out
+              </button>
             </div>
           </div>
 

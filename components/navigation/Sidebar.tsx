@@ -100,7 +100,7 @@ export default function Sidebar() {
       </aside>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-100 px-6 py-2 flex justify-around items-center z-50 shadow-lg pb-safe">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-100 px-2 py-1.5 flex justify-between items-center z-50 shadow-lg pb-safe">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -109,22 +109,22 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-1 py-1 px-3 relative"
+              className="flex flex-col items-center gap-0.5 py-1 px-1 flex-1 min-w-0 relative"
             >
               {isActive && (
                 <motion.span
                   layoutId="active-dot"
-                  className="absolute -top-1 w-1.5 h-1.5 rounded-full bg-blue-500"
+                  className="absolute -top-1.5 w-1.5 h-1.5 rounded-full bg-blue-500"
                   transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
               )}
               <Icon 
-                className={`w-5 h-5 transition-colors ${
+                className={`w-4.5 h-4.5 transition-colors ${
                   isActive ? "text-blue-500" : "text-gray-400"
                 }`} 
               />
               <span 
-                className={`text-[10px] font-medium transition-colors ${
+                className={`text-[9px] font-bold tracking-tight transition-colors truncate w-full text-center ${
                   isActive ? "text-blue-600" : "text-gray-400"
                 }`}
               >
