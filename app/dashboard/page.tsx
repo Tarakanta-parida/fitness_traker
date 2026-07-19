@@ -119,12 +119,18 @@ export default function DashboardPage() {
   const [sleepQuality, setSleepQuality] = useState("good");
   const [sleepLoading, setSleepLoading] = useState(false);
 
-  // Real-time Motion Step Tracker Effect (Self-calibrating baseline dynamic pedometer)
+  // Real-time Motion Step Tracker Effect (Self-calibrating baseline dynamic pedometer with rhythmic walk validation)
   useEffect(() => {
     if (!isTrackingSteps || !data) return;
 
     let lastStepTime = 0;
     let isAboveThreshold = false;
+
+    // Rhythmic step verification parameters
+    let uncommittedStepsCount = 0; // Steps detected but not yet validated as a walk sequence
+    const VERIFICATION_THRESHOLD = 5; // Requires 5 rhythmic steps to verify walking has started
+    const MAX_STEP_INTERVAL = 1400; // Max 1.4s between steps (if exceeded, user has stopped/idle)
+    const MIN_STEP_INTERVAL = 380; // Min 380ms walk pace cooldown
 
     // Running average baseline tracking (calibrates to current gravity/tilt baseline)
     let runningAverage = 9.81;
@@ -153,28 +159,51 @@ export default function DashboardPage() {
 
       const now = Date.now();
 
-      // 3. Dynamic delta threshold (steps typically bounce 0.9 - 1.8 m/s^2 above baseline gravity)
+      // 3. Dynamic delta threshold (steps typically bounce 0.95 m/s^2 above baseline gravity)
       const stepDeltaThreshold = 0.95; 
 
-      // Trigger step if acceleration spikes above baseline gravity, with a 380ms walk tempo cooldown
-      if (!isAboveThreshold && (smoothedMagnitude - runningAverage) > stepDeltaThreshold && (now - lastStepTime) > 380) {
+      // Trigger candidate step if acceleration spikes above baseline gravity, with a 380ms walk tempo cooldown
+      if (!isAboveThreshold && (smoothedMagnitude - runningAverage) > stepDeltaThreshold && (now - lastStepTime) > MIN_STEP_INTERVAL) {
         isAboveThreshold = true;
+        const interval = now - lastStepTime;
         lastStepTime = now;
 
-        // Optimistically update steps, distance, and calories in the UI
-        setData(prevData => {
-          if (!prevData) return null;
-          const nextSteps = prevData.steps + 1;
-          return {
-            ...prevData,
-            steps: nextSteps,
-            distance: nextSteps * 0.000762,
-            caloriesBurned: prevData.caloriesBurned + 0.04
-          };
-        });
+        // Check if the step fits a continuous walking rhythm (under 1.4s interval)
+        if (interval > MAX_STEP_INTERVAL) {
+          // Rhythm was broken or first step. Start a new potential walk sequence
+          uncommittedStepsCount = 1;
+        } else {
+          // Rhythmic step detected!
+          uncommittedStepsCount += 1;
 
-        // Track pending sync count
-        setPendingStepsSync(prev => prev + 1);
+          if (uncommittedStepsCount === VERIFICATION_THRESHOLD) {
+            // Rhythmic walk verified! Commit all 5 accumulated steps to the UI at once
+            setData(prevData => {
+              if (!prevData) return null;
+              const nextSteps = prevData.steps + VERIFICATION_THRESHOLD;
+              return {
+                ...prevData,
+                steps: nextSteps,
+                distance: nextSteps * 0.000762,
+                caloriesBurned: prevData.caloriesBurned + (VERIFICATION_THRESHOLD * 0.04)
+              };
+            });
+            setPendingStepsSync(prev => prev + VERIFICATION_THRESHOLD);
+          } else if (uncommittedStepsCount > VERIFICATION_THRESHOLD) {
+            // Already verified and actively walking: Commit each subsequent step immediately
+            setData(prevData => {
+              if (!prevData) return null;
+              const nextSteps = prevData.steps + 1;
+              return {
+                ...prevData,
+                steps: nextSteps,
+                distance: nextSteps * 0.000762,
+                caloriesBurned: prevData.caloriesBurned + 0.04
+              };
+            });
+            setPendingStepsSync(prev => prev + 1);
+          }
+        }
       } else if (isAboveThreshold && (smoothedMagnitude - runningAverage) < 0.25) {
         // Return below threshold (foot strike recovery phase)
         isAboveThreshold = false;
