@@ -52,6 +52,11 @@ export default function DashboardPage() {
   const [showStepsInput, setShowStepsInput] = useState(false);
   const [quickSteps, setQuickSteps] = useState("");
   const [stepsLoading, setStepsLoading] = useState(false);
+
+  // Real-time Motion Step Tracking state
+  const [isTrackingSteps, setIsTrackingSteps] = useState(false);
+  const [stepPermissionGranted, setStepPermissionGranted] = useState(false);
+  const [pendingStepsSync, setPendingStepsSync] = useState(0);
   
   const [showMealInput, setShowMealInput] = useState(false);
   const [mealName, setMealName] = useState("");
@@ -71,6 +76,120 @@ export default function DashboardPage() {
   const [sleepHours, setSleepHours] = useState("");
   const [sleepQuality, setSleepQuality] = useState("good");
   const [sleepLoading, setSleepLoading] = useState(false);
+
+  // Real-time Motion Step Tracker Effect
+  useEffect(() => {
+    if (!isTrackingSteps || !data) return;
+
+    let magnitudeThreshold = 12.5; // Acceleration peak threshold representing a footstep (average walking impact)
+    let baseThreshold = 10.2; // Return threshold (near gravity 9.8 m/s^2)
+    let lastStepTime = 0;
+    let isAboveThreshold = false;
+
+    // Exponential smoothing factor for low-pass filter (smoothes out hand shakes)
+    const alpha = 0.25;
+    let smoothedMagnitude = 9.81;
+
+    const handleMotion = (event: DeviceMotionEvent) => {
+      const accel = event.accelerationIncludingGravity;
+      if (!accel) return;
+
+      const x = accel.x || 0;
+      const y = accel.y || 0;
+      const z = accel.z || 0;
+
+      // Magnitude of current acceleration vector
+      const currentMagnitude = Math.sqrt(x * x + y * y + z * z);
+
+      // Low-pass filter to smooth out noise
+      smoothedMagnitude = (smoothedMagnitude * (1 - alpha)) + (currentMagnitude * alpha);
+
+      const now = Date.now();
+
+      // Step detection: check if smoothed acceleration magnitude crosses threshold
+      if (!isAboveThreshold && smoothedMagnitude > magnitudeThreshold && (now - lastStepTime) > 350) {
+        isAboveThreshold = true;
+        lastStepTime = now;
+
+        // Optimistically update steps, distance, and calories in the UI
+        setData(prevData => {
+          if (!prevData) return null;
+          const nextSteps = prevData.steps + 1;
+          return {
+            ...prevData,
+            steps: nextSteps,
+            distance: nextSteps * 0.000762,
+            caloriesBurned: prevData.caloriesBurned + 0.04
+          };
+        });
+
+        // Trigger step sound or small action if needed, track pending sync count
+        setPendingStepsSync(prev => prev + 1);
+      } else if (isAboveThreshold && smoothedMagnitude < baseThreshold) {
+        isAboveThreshold = false;
+      }
+    };
+
+    window.addEventListener("devicemotion", handleMotion);
+    return () => {
+      window.removeEventListener("devicemotion", handleMotion);
+    };
+  }, [isTrackingSteps, data]);
+
+  // Debounced auto-sync of steps back to Railway DB
+  useEffect(() => {
+    if (pendingStepsSync >= 5 && data) {
+      syncStepsToServer(data.steps);
+      setPendingStepsSync(0);
+    }
+  }, [pendingStepsSync, data]);
+
+  const syncStepsToServer = async (totalStepsCount: number) => {
+    try {
+      await fetch("/api/dashboard/log-steps", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ steps: totalStepsCount }),
+      });
+    } catch (err) {
+      console.error("Auto sync steps failed:", err);
+    }
+  };
+
+  const toggleStepTracking = async () => {
+    if (isTrackingSteps) {
+      // Turn off: Sync any leftover steps
+      if (pendingStepsSync > 0 && data) {
+        await syncStepsToServer(data.steps);
+        setPendingStepsSync(0);
+      }
+      setIsTrackingSteps(false);
+    } else {
+      // Turn on: Request permissions if required (Safari/iOS compatibility)
+      const DeviceMotionEventClass = (window as any).DeviceMotionEvent;
+      if (
+        DeviceMotionEventClass &&
+        typeof DeviceMotionEventClass.requestPermission === "function"
+      ) {
+        try {
+          const permissionState = await DeviceMotionEventClass.requestPermission();
+          if (permissionState === "granted") {
+            setStepPermissionGranted(true);
+            setIsTrackingSteps(true);
+          } else {
+            alert("Motion permission denied. Cannot auto-count steps.");
+          }
+        } catch (error) {
+          console.error("DeviceMotion permission error:", error);
+          alert("Please open this page in HTTPS / secure context to enable motion tracking.");
+        }
+      } else {
+        // Android/Chrome grants permission implicitly
+        setStepPermissionGranted(true);
+        setIsTrackingSteps(true);
+      }
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -397,12 +516,31 @@ export default function DashboardPage() {
         {/* Quick Summary Grid */}
         <div className="grid grid-cols-2 gap-4 col-span-1 lg:col-span-2">
           {/* Steps Card */}
-          <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+          <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm flex flex-col justify-between relative overflow-hidden group">
+            {isTrackingSteps && (
+              <div className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full animate-ping mt-3 mr-3" />
+            )}
             <div className="flex items-center justify-between">
               <div className="w-9 h-9 bg-blue-50/50 border border-blue-100/30 text-blue-500 rounded-xl flex items-center justify-center">
                 <Activity className="w-5 h-5" />
               </div>
-              <span className="text-[10px] font-bold text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded-full uppercase">Active</span>
+              <button 
+                onClick={toggleStepTracking}
+                className={`text-[9px] font-bold px-2.5 py-1 rounded-full uppercase transition-all shadow-sm flex items-center gap-1 ${
+                  isTrackingSteps 
+                    ? "bg-blue-600 text-white hover:bg-blue-700" 
+                    : "bg-blue-50/50 text-blue-600 hover:bg-blue-100/70"
+                }`}
+              >
+                {isTrackingSteps ? (
+                  <>
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    Tracking Live
+                  </>
+                ) : (
+                  "Sensor Off"
+                )}
+              </button>
             </div>
             <div className="mt-4">
               <span className="text-xs text-gray-400 font-semibold block">Steps Count</span>
