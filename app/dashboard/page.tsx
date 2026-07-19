@@ -119,17 +119,19 @@ export default function DashboardPage() {
   const [sleepQuality, setSleepQuality] = useState("good");
   const [sleepLoading, setSleepLoading] = useState(false);
 
-  // Real-time Motion Step Tracker Effect
+  // Real-time Motion Step Tracker Effect (Self-calibrating baseline dynamic pedometer)
   useEffect(() => {
     if (!isTrackingSteps || !data) return;
 
-    let magnitudeThreshold = 12.5; // Acceleration peak threshold representing a footstep (average walking impact)
-    let baseThreshold = 10.2; // Return threshold (near gravity 9.8 m/s^2)
     let lastStepTime = 0;
     let isAboveThreshold = false;
 
-    // Exponential smoothing factor for low-pass filter (smoothes out hand shakes)
-    const alpha = 0.25;
+    // Running average baseline tracking (calibrates to current gravity/tilt baseline)
+    let runningAverage = 9.81;
+    const beta = 0.015; // Slow adaptation rate
+
+    // Exponential smoothing factor for low-pass filter (removes high-frequency jitter)
+    const alpha = 0.22;
     let smoothedMagnitude = 9.81;
 
     const handleMotion = (event: DeviceMotionEvent) => {
@@ -140,16 +142,22 @@ export default function DashboardPage() {
       const y = accel.y || 0;
       const z = accel.z || 0;
 
-      // Magnitude of current acceleration vector
+      // 3D Magnitude of current acceleration vector
       const currentMagnitude = Math.sqrt(x * x + y * y + z * z);
 
-      // Low-pass filter to smooth out noise
+      // 1. Apply low-pass filter to smooth out sensor tremors
       smoothedMagnitude = (smoothedMagnitude * (1 - alpha)) + (currentMagnitude * alpha);
+
+      // 2. Slow-adapt the baseline gravity average (adjusts dynamically if user changes orientation)
+      runningAverage = (runningAverage * (1 - beta)) + (currentMagnitude * beta);
 
       const now = Date.now();
 
-      // Step detection: check if smoothed acceleration magnitude crosses threshold
-      if (!isAboveThreshold && smoothedMagnitude > magnitudeThreshold && (now - lastStepTime) > 350) {
+      // 3. Dynamic delta threshold (steps typically bounce 0.9 - 1.8 m/s^2 above baseline gravity)
+      const stepDeltaThreshold = 0.95; 
+
+      // Trigger step if acceleration spikes above baseline gravity, with a 380ms walk tempo cooldown
+      if (!isAboveThreshold && (smoothedMagnitude - runningAverage) > stepDeltaThreshold && (now - lastStepTime) > 380) {
         isAboveThreshold = true;
         lastStepTime = now;
 
@@ -165,9 +173,10 @@ export default function DashboardPage() {
           };
         });
 
-        // Trigger step sound or small action if needed, track pending sync count
+        // Track pending sync count
         setPendingStepsSync(prev => prev + 1);
-      } else if (isAboveThreshold && smoothedMagnitude < baseThreshold) {
+      } else if (isAboveThreshold && (smoothedMagnitude - runningAverage) < 0.25) {
+        // Return below threshold (foot strike recovery phase)
         isAboveThreshold = false;
       }
     };
