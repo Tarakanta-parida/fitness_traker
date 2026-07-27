@@ -207,8 +207,8 @@ export default function ReminderNotificationManager() {
           const hourNum = now.getHours();
           const minNum = now.getMinutes();
 
-          // Trigger on the hour mark if it fits the interval (e.g. divisible by 2 hours between 8 AM and 10 PM)
-          if (minNum === 0 && hourNum >= 8 && hourNum <= 22 && hourNum % intervalHrs === 0) {
+          // Trigger on the hour mark if it fits the interval (e.g. divisible by N hours)
+          if (minNum === 0 && hourNum % intervalHrs === 0) {
             isTriggered = true;
             title = "💧 Hydration Reminder!";
             message = "Time to drink a fresh glass of water to stay hydrated!";

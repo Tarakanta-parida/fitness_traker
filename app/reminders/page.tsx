@@ -51,41 +51,24 @@ function getCountdownToTime(targetTimeStr: string): string {
   return `${mins}m ${secs}s`;
 }
 
-// Real-time countdown helper for frequency-based water reminders (8:00 AM - 10:00 PM window)
+// Real-time countdown helper for frequency-based water reminders (24-hour cycle)
 function getCountdownToWater(intervalHrsStr: string): string {
   const intervalHrs = parseInt(intervalHrsStr.match(/\d+/) ? intervalHrsStr.match(/\d+/)![0] : "2");
   const now = new Date();
-  const hourNum = now.getHours();
-  
-  const START_HOUR = 8;
-  const END_HOUR = 22;
   
   let next = new Date();
   next.setMinutes(0, 0, 0);
   
-  if (hourNum < START_HOUR) {
-    next.setHours(START_HOUR);
-  } else if (hourNum >= END_HOUR) {
-    next.setDate(next.getDate() + 1);
-    next.setHours(START_HOUR);
-  } else {
-    let nextHour = hourNum;
-    if (now.getMinutes() > 0 || now.getSeconds() > 0) {
-      nextHour += 1;
-    }
-    while (nextHour % intervalHrs !== 0 || nextHour < START_HOUR) {
-      nextHour += 1;
-      if (nextHour > END_HOUR) {
-        break;
-      }
-    }
-    if (nextHour > END_HOUR) {
-      next.setDate(next.getDate() + 1);
-      next.setHours(START_HOUR);
-    } else {
-      next.setHours(nextHour);
-    }
+  let nextHour = now.getHours();
+  if (now.getMinutes() > 0 || now.getSeconds() > 0) {
+    nextHour += 1;
   }
+  
+  while (nextHour % intervalHrs !== 0) {
+    nextHour += 1;
+  }
+  
+  next.setHours(nextHour);
   
   const diffMs = next.getTime() - now.getTime();
   const diffSecs = Math.floor(diffMs / 1000);
