@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { usePedometer } from "@/hooks/use-pedometer";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Sparkles, 
@@ -54,16 +55,23 @@ export default function DashboardPage() {
   const [quickSteps, setQuickSteps] = useState("");
   const [stepsLoading, setStepsLoading] = useState(false);
 
-  // Real-time Motion Step Tracking state (defaults to true / always on)
-  const [isTrackingSteps, setIsTrackingSteps] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("step_tracking_enabled");
-      return saved !== "false"; // Defaults to true if not set
+  // Advanced Web Worker Pedometer hook integration
+  const pedometer = usePedometer(
+    data?.steps || 0,
+    data?.distance || 0.0,
+    data?.caloriesBurned || 0.0
+  );
+
+  // Sync initial database load values to pedometer hook when dashboard data resolves
+  useEffect(() => {
+    if (data) {
+      // Allow user tracking preference from local storage to auto-start pedometer
+      const savedTracking = localStorage.getItem("step_tracking_enabled") !== "false";
+      if (savedTracking && !pedometer.isTracking) {
+        pedometer.startTracking();
+      }
     }
-    return true;
-  });
-  const [stepPermissionGranted, setStepPermissionGranted] = useState(false);
-  const [pendingStepsSync, setPendingStepsSync] = useState(0);
+  }, [data]);
 
   // PWA Install State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -119,179 +127,11 @@ export default function DashboardPage() {
   const [sleepQuality, setSleepQuality] = useState("good");
   const [sleepLoading, setSleepLoading] = useState(false);
 
-  // Real-time Motion Step Tracker Effect (Self-calibrating gravity-aligned vector projection pedometer)
-  useEffect(() => {
-    if (!isTrackingSteps || !data) return;
-
-    let lastStepTime = 0;
-    let isAboveThreshold = false;
-
-    // Rhythmic step verification parameters
-    let uncommittedStepsCount = 0; // Steps detected but not yet validated as a walk sequence
-    const VERIFICATION_THRESHOLD = 6; // Requires 6 consecutive rhythmic steps to confirm walking (prevents casual shakes)
-    const MAX_STEP_INTERVAL = 1800; // Max 1.8s between steps (allows slow walking/pacing)
-    const MIN_STEP_INTERVAL = 380; // Min 380ms pace cooldown (ignores rapid phone shaking)
-
-    // Dynamic 3D gravity baseline estimation (tracks current earth gravity orientation)
-    let avgX = 0;
-    let avgY = 9.81;
-    let avgZ = 0;
-    let gravityInitialized = false;
-
-    const handleMotion = (event: DeviceMotionEvent) => {
-      const accel = event.accelerationIncludingGravity;
-      if (!accel) return;
-
-      const x = accel.x || 0;
-      const y = accel.y || 0;
-      const z = accel.z || 0;
-
-      // 1. Initialize baseline gravity vector on first measurement
-      if (!gravityInitialized) {
-        avgX = x;
-        avgY = y;
-        avgZ = z;
-        gravityInitialized = true;
-        return;
-      }
-
-      // 2. Slow-adapt the direction of the gravity vector (beta = 0.02)
-      avgX = avgX * 0.98 + x * 0.02;
-      avgY = avgY * 0.98 + y * 0.02;
-      avgZ = avgZ * 0.98 + z * 0.02;
-
-      // Gravity vector magnitude (normally ~9.81 m/s^2)
-      const gravMag = Math.sqrt(avgX * avgX + avgY * avgY + avgZ * avgZ) || 9.81;
-
-      // 3. Normalize gravity vector components
-      const uX = avgX / gravMag;
-      const uY = avgY / gravMag;
-      const uZ = avgZ / gravMag;
-
-      // 4. Dot-product: Project current acceleration vector onto Earth gravity vector
-      // This isolates the pure vertical acceleration component (up/down relative to Earth), ignoring horizontal shakes!
-      const verticalAccel = x * uX + y * uY + z * uZ;
-
-      const now = Date.now();
-
-      // 5. Walking step threshold definitions:
-      // Real steps cause vertical deceleration followed by rebound impact (ranges from 1.1 to 3.0 m/s^2 above gravity)
-      const stepUpperThreshold = gravMag + 1.15; 
-      const stepLowerThreshold = gravMag - 0.5;
-
-      // Shaking the phone violently produces large vertical forces (> 4.8 m/s^2 above gravity) which we filter out
-      const maxWalkingVertical = gravMag + 4.8;
-
-      if (!isAboveThreshold && verticalAccel > stepUpperThreshold && verticalAccel < maxWalkingVertical && (now - lastStepTime) > MIN_STEP_INTERVAL) {
-        isAboveThreshold = true;
-        const interval = now - lastStepTime;
-        lastStepTime = now;
-
-        // Check if the step fits a continuous walking rhythm (under 1.8s interval)
-        if (interval > MAX_STEP_INTERVAL) {
-          // Rhythm was broken or first step. Start a new potential walk sequence
-          uncommittedStepsCount = 1;
-        } else {
-          // Rhythmic step detected!
-          uncommittedStepsCount += 1;
-
-          if (uncommittedStepsCount === VERIFICATION_THRESHOLD) {
-            // Rhythmic walk verified! Commit all 6 accumulated steps to the UI at once
-            setData(prevData => {
-              if (!prevData) return null;
-              const nextSteps = prevData.steps + VERIFICATION_THRESHOLD;
-              const newKcal = parseFloat((prevData.caloriesBurned + (VERIFICATION_THRESHOLD * 0.04)).toFixed(2));
-              return {
-                ...prevData,
-                steps: nextSteps,
-                distance: nextSteps * 0.000762,
-                caloriesBurned: newKcal
-              };
-            });
-            setPendingStepsSync(prev => prev + VERIFICATION_THRESHOLD);
-          } else if (uncommittedStepsCount > VERIFICATION_THRESHOLD) {
-            // Already verified and actively walking: Commit each subsequent step immediately
-            setData(prevData => {
-              if (!prevData) return null;
-              const nextSteps = prevData.steps + 1;
-              const newKcal = parseFloat((prevData.caloriesBurned + 0.04).toFixed(2));
-              return {
-                ...prevData,
-                steps: nextSteps,
-                distance: nextSteps * 0.000762,
-                caloriesBurned: newKcal
-              };
-            });
-            setPendingStepsSync(prev => prev + 1);
-          }
-        }
-      } else if (isAboveThreshold && verticalAccel < stepLowerThreshold) {
-        // Return below threshold (foot strike recovery phase)
-        isAboveThreshold = false;
-      }
-    };
-
-    window.addEventListener("devicemotion", handleMotion);
-    return () => {
-      window.removeEventListener("devicemotion", handleMotion);
-    };
-  }, [isTrackingSteps, data]);
-
-  // Debounced auto-sync of steps back to Railway DB
-  useEffect(() => {
-    if (pendingStepsSync >= 5 && data) {
-      syncStepsToServer(data.steps);
-      setPendingStepsSync(0);
-    }
-  }, [pendingStepsSync, data]);
-
-  const syncStepsToServer = async (totalStepsCount: number) => {
-    try {
-      await fetch("/api/dashboard/log-steps", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ steps: totalStepsCount }),
-      });
-    } catch (err) {
-      console.error("Auto sync steps failed:", err);
-    }
-  };
-
-  const toggleStepTracking = async () => {
-    if (isTrackingSteps) {
-      // Turn off: Sync any leftover steps
-      if (pendingStepsSync > 0 && data) {
-        await syncStepsToServer(data.steps);
-        setPendingStepsSync(0);
-      }
-      setIsTrackingSteps(false);
-      localStorage.setItem("step_tracking_enabled", "false");
+  const toggleStepTracking = () => {
+    if (pedometer.isTracking) {
+      pedometer.stopTracking();
     } else {
-      // Turn on: Request permissions if required (Safari/iOS compatibility)
-      const DeviceMotionEventClass = (window as any).DeviceMotionEvent;
-      if (
-        DeviceMotionEventClass &&
-        typeof DeviceMotionEventClass.requestPermission === "function"
-      ) {
-        try {
-          const permissionState = await DeviceMotionEventClass.requestPermission();
-          if (permissionState === "granted") {
-            setStepPermissionGranted(true);
-            setIsTrackingSteps(true);
-            localStorage.setItem("step_tracking_enabled", "true");
-          } else {
-            alert("Motion permission denied. Cannot auto-count steps.");
-          }
-        } catch (error) {
-          console.error("DeviceMotion permission error:", error);
-          alert("Please open this page in HTTPS / secure context to enable motion tracking.");
-        }
-      } else {
-        // Android/Chrome grants permission implicitly
-        setStepPermissionGranted(true);
-        setIsTrackingSteps(true);
-        localStorage.setItem("step_tracking_enabled", "true");
-      }
+      pedometer.startTracking();
     }
   };
 
@@ -512,10 +352,10 @@ export default function DashboardPage() {
   if (!data) return null;
 
   // Calculations for Ring progress
-  const stepPercent = Math.min(100, Math.round((data.steps / data.stepsGoal) * 100));
+  const stepPercent = Math.min(100, Math.round((pedometer.steps / data.stepsGoal) * 100));
   const waterPercent = Math.min(100, Math.round((data.waterGlasses / data.waterGoal) * 100));
   const exercisePercent = Math.min(100, Math.round((data.workoutMinutes / 60) * 100)); // Default 60 mins workout goal
-  const caloriesBurntPercent = Math.min(100, Math.round((data.caloriesBurned / 500) * 100)); // Default 500 active kcal goal
+  const caloriesBurntPercent = Math.min(100, Math.round((pedometer.caloriesBurned / 500) * 100)); // Default 500 active kcal goal
 
   const getGreeting = () => {
     const hrs = new Date().getHours();
@@ -632,7 +472,7 @@ export default function DashboardPage() {
               
               <div className="w-8 h-px bg-gray-100 my-1.5" />
               
-              <span className="text-xl font-black text-green-650 leading-none">{data.caloriesBurned.toFixed(1)}</span>
+              <span className="text-xl font-black text-green-650 leading-none">{pedometer.caloriesBurned.toFixed(1)}</span>
               <span className="text-[9px] font-bold text-green-500 uppercase tracking-wider mt-0.5">Kcal</span>
             </div>
           </div>
@@ -653,7 +493,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-4 col-span-1 lg:col-span-2">
           {/* Steps Card */}
           <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-sm flex flex-col justify-between relative overflow-hidden group">
-            {isTrackingSteps && (
+            {pedometer.isTracking && (
               <div className="absolute top-0 right-0 w-2 h-2 bg-blue-500 rounded-full animate-ping mt-3 mr-3" />
             )}
             <div className="flex items-center justify-between">
@@ -663,12 +503,12 @@ export default function DashboardPage() {
               <button 
                 onClick={toggleStepTracking}
                 className={`text-[9px] font-bold px-2.5 py-1 rounded-full uppercase transition-all shadow-sm flex items-center gap-1 ${
-                  isTrackingSteps 
+                  pedometer.isTracking 
                     ? "bg-blue-600 text-white hover:bg-blue-700" 
                     : "bg-blue-50/50 text-blue-600 hover:bg-blue-100/70"
                 }`}
               >
-                {isTrackingSteps ? (
+                {pedometer.isTracking ? (
                   <>
                     <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                     Tracking Live
@@ -679,9 +519,26 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="mt-4">
-              <span className="text-xs text-gray-400 font-semibold block">Steps Count</span>
-              <span className="text-2xl font-black text-gray-800 block mt-1">{data.steps.toLocaleString()}</span>
-              <span className="text-[11px] text-gray-500 mt-1 block">Goal: {data.stepsGoal.toLocaleString()} ({data.distance.toFixed(1)} km)</span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400 font-semibold">Steps Count</span>
+                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider ${
+                  pedometer.engineState === "CONFIRMED_WALKING" ? "bg-green-50 text-green-600 border border-green-100 animate-pulse" :
+                  pedometer.engineState === "MOVEMENT_DETECTED" ? "bg-cyan-50 text-cyan-600 border border-cyan-100" :
+                  pedometer.engineState === "SHAKE" ? "bg-yellow-50 text-yellow-600 border border-yellow-100 animate-bounce" :
+                  pedometer.engineState === "TABLE_VIBRATION" ? "bg-red-50 text-red-650 border border-red-100" :
+                  pedometer.engineState === "IDLE_OR_VEHICLE" ? "bg-amber-50 text-amber-600 border border-amber-100" :
+                  "bg-gray-50 text-gray-400"
+                }`}>
+                  {pedometer.engineState === "CONFIRMED_WALKING" ? "👟 Walking" :
+                   pedometer.engineState === "MOVEMENT_DETECTED" ? "⚡ Buffering" :
+                   pedometer.engineState === "SHAKE" ? "⚠️ Shaking" :
+                   pedometer.engineState === "TABLE_VIBRATION" ? "⚠️ Vibration" :
+                   pedometer.engineState === "IDLE_OR_VEHICLE" ? "🚗 Vehicle/Idle" :
+                   "💤 Standby"}
+                </span>
+              </div>
+              <span className="text-2xl font-black text-gray-800 block mt-1">{pedometer.steps.toLocaleString()}</span>
+              <span className="text-[11px] text-gray-500 mt-1 block">Goal: {data.stepsGoal.toLocaleString()} ({pedometer.distance.toFixed(1)} km)</span>
             </div>
           </div>
 
@@ -695,7 +552,7 @@ export default function DashboardPage() {
             </div>
             <div className="mt-4">
               <span className="text-xs text-gray-400 font-semibold block">Active Burned</span>
-              <span className="text-2xl font-black text-gray-800 block mt-1">{data.caloriesBurned.toFixed(1)} kcal</span>
+              <span className="text-2xl font-black text-gray-800 block mt-1">{pedometer.caloriesBurned.toFixed(1)} kcal</span>
               <span className="text-[11px] text-gray-500 mt-1 block">Workout Duration: {data.workoutMinutes} mins</span>
             </div>
           </div>

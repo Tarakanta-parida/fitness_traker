@@ -22,14 +22,18 @@ model User {
   createdAt    DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
   stepsTarget  Int?            @default(10000) @map("steps_target")
   sleepTarget  Decimal?        @default(8.00) @map("sleep_target") @db.Decimal(4, 2)
-  activities   DailyActivity[]
-  exercises    Exercise[]
-  groceryItems GroceryItem[]
-  meals        Meal[]
-  progressLogs Progress[]
-  reminders    Reminder[]
-  sleepLogs    Sleep[]
-  waterIntakes WaterIntake[]
+  activities     DailyActivity[]
+  exercises      Exercise[]
+  groceryItems   GroceryItem[]
+  meals          Meal[]
+  progressLogs   Progress[]
+  reminders      Reminder[]
+  sleepLogs      Sleep[]
+  waterIntakes   WaterIntake[]
+  goals          Goal[]
+  achievements   Achievement[]
+  deviceSessions DeviceSession[]
+  stepLogs       DailyStepLog[]
 
   @@map("users")
 }
@@ -143,4 +147,57 @@ model Progress {
   @@unique([userId, date])
   @@index([userId, date], map: "idx_progress_user_date")
   @@map("progress")
+}
+
+model Goal {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  type       String   @db.VarChar(50) // STEPS, WATER, SLEEP, CALORIES
+  target     Decimal  @db.Decimal(10, 2)
+  current    Decimal  @default(0.00) @db.Decimal(10, 2)
+  date       DateTime @db.Date
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userId, type, date])
+  @@index([userId, date], map: "idx_goal_user_date")
+  @@map("goals")
+}
+
+model Achievement {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  title       String   @db.VarChar(100)
+  description String   @db.VarChar(255)
+  unlockedAt  DateTime @default(now()) @map("unlocked_at") @db.Timestamptz(6)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId], map: "idx_achievement_user")
+  @@map("achievements")
+}
+
+model DeviceSession {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  deviceId   String   @map("device_id") @db.VarChar(255)
+  osName     String   @map("os_name") @db.VarChar(50)
+  lastSyncAt DateTime @default(now()) @map("last_sync_at") @db.Timestamptz(6)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userId, deviceId])
+  @@map("device_sessions")
+}
+
+model DailyStepLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  steps          Int
+  distance       Decimal  @db.Decimal(10, 4)
+  caloriesBurned Decimal  @map("calories_burned") @db.Decimal(10, 2)
+  activeSeconds  Int      @default(0) @map("active_seconds")
+  date           DateTime @db.Date
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([userId, date], map: "idx_steplog_user_date")
+  @@map("daily_step_logs")
 }
