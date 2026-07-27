@@ -172,7 +172,11 @@ export default function RemindersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, enabled: !currentStatus }),
       });
-      if (!res.ok) fetchReminders(); // Rollback
+      if (res.ok) {
+        window.dispatchEvent(new Event("reminders-updated"));
+      } else {
+        fetchReminders(); // Rollback
+      }
     } catch (err) {
       fetchReminders(); // Rollback
     }
@@ -188,6 +192,7 @@ export default function RemindersPage() {
       });
       if (res.ok) {
         await fetchReminders();
+        window.dispatchEvent(new Event("reminders-updated"));
         alert(`${type.charAt(0) + type.slice(1).toLowerCase()} reminder updated successfully!`);
       }
     } catch (err) {

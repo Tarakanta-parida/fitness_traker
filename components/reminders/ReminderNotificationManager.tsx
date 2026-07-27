@@ -19,6 +19,7 @@ export default function ReminderNotificationManager() {
   const [activeAlert, setActiveAlert] = useState<{ type: string; title: string; message: string } | null>(null);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const checkedTimesRef = useRef<Set<string>>(new Set());
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   // 1. Fetch user's active reminders list
   const fetchReminders = async () => {
@@ -52,17 +53,66 @@ export default function ReminderNotificationManager() {
       if (!hasAsked) {
         setShowPermissionModal(true);
       }
+
+      // Add a periodic 30-second refetch to keep background manager updated
+      const pollInterval = setInterval(fetchReminders, 30000);
+
+      // Listen for custom reminders-updated event dispatched by reminders/page.tsx
+      const handleRemindersUpdated = () => {
+        console.log("Reminders updated event detected. Refreshing manager...");
+        fetchReminders();
+      };
+      window.addEventListener("reminders-updated", handleRemindersUpdated);
+
+      return () => {
+        clearInterval(pollInterval);
+        window.removeEventListener("reminders-updated", handleRemindersUpdated);
+      };
     } else {
       setReminders([]);
     }
   }, [user]);
 
+  // Unlock AudioContext on first user interaction (safeguards browser auto-play policy)
+  useEffect(() => {
+    const initAudio = () => {
+      if (typeof window !== "undefined") {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass && !audioCtxRef.current) {
+          audioCtxRef.current = new AudioContextClass();
+        }
+      }
+    };
+
+    const handleUnlock = () => {
+      initAudio();
+      if (audioCtxRef.current && audioCtxRef.current.state === "suspended") {
+        audioCtxRef.current.resume().catch(e => console.log("AudioContext resume blocked:", e));
+      }
+    };
+
+    window.addEventListener("click", handleUnlock);
+    window.addEventListener("touchstart", handleUnlock);
+    return () => {
+      window.removeEventListener("click", handleUnlock);
+      window.removeEventListener("touchstart", handleUnlock);
+    };
+  }, []);
+
   // 2. Dynamic Audio Siren Generator using Web Audio API
   const playSirenAlarm = () => {
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) return;
-      const ctx = new AudioContextClass();
+      let ctx = audioCtxRef.current;
+      if (!ctx) {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContextClass) return;
+        ctx = new AudioContextClass();
+        audioCtxRef.current = ctx;
+      }
+      
+      if (ctx.state === "suspended") {
+        ctx.resume();
+      }
       
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -79,7 +129,7 @@ export default function ReminderNotificationManager() {
         osc.frequency.setValueAtTime(880, now + i * 0.5 + 0.25);
       }
       
-      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.setValueAtTime(0.35, now); // slightly louder
       gain.gain.exponentialRampToValueAtTime(0.01, now + 5.0); // fade out over 5s
       
       osc.start(now);
