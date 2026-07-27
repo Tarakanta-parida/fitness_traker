@@ -35,6 +35,10 @@ interface GroceryItem {
   price: string;
 }
 
+const formatPrice = (val: number) => {
+  return val > 15 ? `₹${val.toFixed(0)}` : `$${val.toFixed(2)}`;
+};
+
 export default function MealPlannerPage() {
   const { user } = useAuth();
   const [dietPref, setDietPref] = useState("non-veg");
@@ -240,7 +244,7 @@ export default function MealPlannerPage() {
               <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-6">
                 <div>
                   <h3 className="font-bold text-base text-gray-800 tracking-tight">Today's Recommended Plan</h3>
-                  <p className="text-xs text-gray-450 mt-0.5">Target: {mealPlan.totalCalories} kcal &bull; {mealPlan.totalProtein}g protein &bull; Cost: ${mealPlan.totalCost.toFixed(2)}/day</p>
+                  <p className="text-xs text-gray-450 mt-0.5">Target: {mealPlan.totalCalories} kcal &bull; {mealPlan.totalProtein}g protein &bull; Cost: {formatPrice(mealPlan.totalCost)}/day</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -254,7 +258,7 @@ export default function MealPlannerPage() {
                       <div>
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-[10px] font-bold text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded-full uppercase">{meal.key}</span>
-                          <span className="text-[10px] font-bold text-gray-400">${meal.data.cost.toFixed(2)}</span>
+                          <span className="text-[10px] font-bold text-gray-400">{formatPrice(meal.data.cost)}</span>
                         </div>
                         <h4 className="font-bold text-xs text-gray-800 capitalize leading-snug">{meal.data.name}</h4>
                         <div className="flex items-center gap-3 text-[10px] text-gray-450 mt-1">
@@ -272,7 +276,7 @@ export default function MealPlannerPage() {
                 </div>
               </div>
 
-              {/* Weekly Grocery List Card */}
+              // Weekly Grocery List Card
               <div id="grocery" className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-6 scroll-mt-6">
                 <div className="flex justify-between items-center">
                   <div>
@@ -284,7 +288,7 @@ export default function MealPlannerPage() {
                   </div>
                   {groceryItems.length > 0 && (
                     <span className="text-xs font-bold text-green-700 bg-green-50/50 px-3 py-1 rounded-full">
-                      Cart Total: ${totalGroceryCost.toFixed(2)}
+                      Cart Total: {formatPrice(totalGroceryCost)}
                     </span>
                   )}
                 </div>
@@ -304,7 +308,7 @@ export default function MealPlannerPage() {
                       <div key={g.id} className="grid grid-cols-3 text-xs py-2 px-1 items-center border-b border-gray-50/50">
                         <span className="font-bold text-gray-800">{g.item}</span>
                         <span className="text-gray-500">{g.quantity}</span>
-                        <span className="text-right font-semibold text-gray-700">${Number(g.price).toFixed(2)}</span>
+                        <span className="text-right font-semibold text-gray-700">{formatPrice(Number(g.price))}</span>
                       </div>
                     ))}
                   </div>

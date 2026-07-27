@@ -44,54 +44,161 @@ export async function GET() {
     // Daily allowance budget
     const dailyBudget = budgetVal / 7;
 
-    // Generate Recommended meals based on Dietary preference
-    const isVeg = user.goal === "VEGETARIAN" || true; // Check preference or default
-    // We can pull the preference from user setup or default
+    // 1. Curated local Indian budget diet fallbacks (in Rupees) if Gemini is not set or fails
+    const isVeg = user.goal?.toLowerCase().includes("veg") || user.goal === "maintain"; // Check preference
     
-    // Generate meal options
-    const breakfast = {
-      name: "Oatmeal with Bananas & Almonds",
-      calories: 380,
-      protein: 12,
-      cost: 1.50,
-      ingredients: ["Oats (50g)", "Milk (200ml)", "1 Banana", "Almonds (15g)"]
+    const vegFallback = {
+      breakfast: {
+        name: "Moong Dal Chilla & Roasted Chana",
+        calories: 320,
+        protein: 14,
+        cost: 25.00,
+        ingredients: ["Sprouted Moong Dal (70g)", "1 Green Chilli & Ginger", "Roasted Bengal Gram (30g)"]
+      },
+      lunch: {
+        name: "Toor Dal Tadka, Roti (2) & Mixed Veg Subji",
+        calories: 520,
+        protein: 18,
+        cost: 50.00,
+        ingredients: ["Split Pigeon Peas (Toor Dal) (60g)", "2 Slices Whole Wheat Chapati", "Mixed Cauliflower/Beans (150g)", "Mustard Oil (1 tsp)"]
+      },
+      dinner: {
+        name: "Soya Chunks Masala with Brown Rice",
+        calories: 460,
+        protein: 26,
+        cost: 45.00,
+        ingredients: ["High-protein Soya Chunks (50g)", "Boiled Brown Rice (80g)", "Onion & Tomato Gravy"]
+      },
+      snack: {
+        name: "Sprouted Moong Salad with Lemon",
+        calories: 150,
+        protein: 8,
+        cost: 15.00,
+        ingredients: ["Sprouted Green Gram (100g)", "Lemon Juice", "1 Cucumber & Tomato"]
+      }
     };
 
-    let lunch = {
-      name: "Grilled Chicken Breast with Brown Rice & Veggies",
-      calories: 550,
-      protein: 42,
-      cost: 4.50,
-      ingredients: ["Chicken Breast (150g)", "Brown Rice (75g)", "Broccoli & Carrots (100g)", "Olive Oil (1 tsp)"]
+    const nonVegFallback = {
+      breakfast: {
+        name: "Egg Bhurji (3 Eggs) & Whole Wheat Toast",
+        calories: 380,
+        protein: 24,
+        cost: 35.00,
+        ingredients: ["3 Whole Eggs", "2 Slices Whole Wheat Bread", "Onion, Tomato & Chillies"]
+      },
+      lunch: {
+        name: "Home Style Chicken Curry with Steamed Rice",
+        calories: 590,
+        protein: 38,
+        cost: 75.00,
+        ingredients: ["Lean Chicken Pieces (150g)", "White Basmati Rice (100g)", "Onion, Garlic & Spice Gravy"]
+      },
+      dinner: {
+        name: "Double Egg Curry with Roti (2)",
+        calories: 450,
+        protein: 20,
+        cost: 40.00,
+        ingredients: ["2 Hard Boiled Eggs", "2 Whole Wheat Chapatis", "Tomato Curry Gravy"]
+      },
+      snack: {
+        name: "Roasted Peanuts & Green Tea",
+        calories: 180,
+        protein: 8,
+        cost: 15.00,
+        ingredients: ["Dry Roasted Peanuts (30g)", "1 Cup Green Tea (No Sugar)"]
+      }
     };
 
-    let dinner = {
-      name: "Egg White Omelette with Whole Wheat Toast",
-      calories: 420,
-      protein: 28,
-      cost: 2.20,
-      ingredients: ["4 Egg Whites", "1 Whole Egg", "2 Slices Whole Wheat Bread", "Spinach & Onion"]
-    };
+    let selectedPlan = isVeg ? vegFallback : nonVegFallback;
 
-    let snack = {
-      name: "Greek Yogurt with Honey",
-      calories: 200,
-      protein: 15,
-      cost: 1.80,
-      ingredients: ["Greek Yogurt (150g)", "Honey (1 tsp)"]
-    };
+    // 2. Query Google Gemini AI API if a valid key is provided
+    const apiKey = process.env.GEMINI_API_KEY;
+    const hasValidKey = apiKey && apiKey !== "PASTE_YOUR_GEMINI_API_KEY_HERE";
 
-    // If Veg preference is enabled, swap to vegetarian alternatives
-    // We can check if vegetarian preference was set. Let's do it dynamically.
-    // (Suppose vegetarian preference is determined from the diet pref state, which we can read).
-    // Let's check: we can pass a query parameter ?preference=veg or read user state.
-    // Let's support a query param preference.
+    if (hasValidKey) {
+      try {
+        const dietTypeStr = isVeg ? "strictly Vegetarian (Veg)" : "Non-Vegetarian (including eggs and chicken)";
+        const prompt = `You are a professional nutritionist. Recommend a 1-day Indian budget meal plan (Breakfast, Lunch, Dinner, and 1 Snack) for a user with the following profile:
+- Age: ${ageVal} years old
+- Gender: ${genderVal}
+- Weight: ${weightVal} kg
+- Height: ${heightVal} cm
+- Fitness Goal: ${goalVal}
+- Daily Food Budget: Rs. ${Math.round(dailyBudget * 83)} INR (using 1 USD = 83 INR conversion)
+- Diet Preference: ${dietTypeStr}
+
+The meal plan must consist of real Indian foods (like Poha, Dal, Chapati, Rice, Egg Bhurji, Paneer, etc.) with affordable pricing in Indian Rupees (INR).
+You must output a strict JSON object matching this structure exactly (do not output any markdown blocks or conversational text, only return the JSON):
+{
+  "breakfast": {
+    "name": "string",
+    "calories": number,
+    "protein": number,
+    "cost": number (approx cost in INR),
+    "ingredients": ["string"]
+  },
+  "lunch": {
+    "name": "string",
+    "calories": number,
+    "protein": number,
+    "cost": number (approx cost in INR),
+    "ingredients": ["string"]
+  },
+  "dinner": {
+    "name": "string",
+    "calories": number,
+    "protein": number,
+    "cost": number (approx cost in INR),
+    "ingredients": ["string"]
+  },
+  "snack": {
+    "name": "string",
+    "calories": number,
+    "protein": number,
+    "cost": number (approx cost in INR),
+    "ingredients": ["string"]
+  }
+}`;
+
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                responseMimeType: "application/json"
+              }
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const resJson = await response.json();
+          const responseText = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (responseText) {
+            const parsed = JSON.parse(responseText.trim());
+            if (parsed.breakfast && parsed.lunch && parsed.dinner && parsed.snack) {
+              selectedPlan = parsed;
+              console.log("Successfully loaded dynamic meal plan from Google Gemini.");
+            }
+          }
+        }
+      } catch (geminiErr) {
+        console.error("Gemini API call failed, using local Indian fallbacks:", geminiErr);
+      }
+    }
+
+    const { breakfast, lunch, dinner, snack } = selectedPlan;
+
     return NextResponse.json({
       success: true,
+      isAiGenerated: hasValidKey,
       nutritionTargets: {
         calories: targetCalories,
         protein: targetProtein,
-        dailyBudget,
+        dailyBudget: dailyBudget,
       },
       mealPlan: {
         breakfast,

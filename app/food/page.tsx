@@ -29,6 +29,10 @@ interface MealItem {
   date: string;
 }
 
+const formatPrice = (val: number) => {
+  return val > 15 ? `₹${val.toFixed(0)}` : `$${val.toFixed(2)}`;
+};
+
 export default function FoodPage() {
   const { user } = useAuth();
   const [meals, setMeals] = useState<MealItem[]>([]);
@@ -172,8 +176,8 @@ export default function FoodPage() {
             <DollarSign className="w-5 h-5 text-green-550" />
           </div>
           <div className="my-6">
-            <span className="text-3xl font-black text-gray-800">${budgetRemaining.toFixed(2)}</span>
-            <span className="text-xs text-gray-450 font-medium block mt-1">Remaining of ${weeklyBudget.toFixed(2)} total</span>
+            <span className="text-3xl font-black text-gray-800">{formatPrice(budgetRemaining)}</span>
+            <span className="text-xs text-gray-450 font-medium block mt-1">Remaining of {formatPrice(weeklyBudget)} total</span>
           </div>
           {/* Progress bar */}
           <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
@@ -246,7 +250,7 @@ export default function FoodPage() {
                     <div key={m.id} className="flex justify-between items-center p-3 border border-gray-50 rounded-2xl text-xs bg-gray-50/20">
                       <div>
                         <span className="font-bold text-gray-800 capitalize block">{m.foodName}</span>
-                        <span className="text-[10px] text-gray-400 block mt-0.5">{m.protein}g protein &bull; Cost: ${Number(m.price).toFixed(2)}</span>
+                        <span className="text-[10px] text-gray-400 block mt-0.5">{m.protein}g protein &bull; Cost: {formatPrice(Number(m.price))}</span>
                       </div>
                       <div className="text-right flex items-center gap-4">
                         <span className="font-black text-gray-850">{m.calories} kcal</span>
