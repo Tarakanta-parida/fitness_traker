@@ -114,26 +114,55 @@ export function usePedometer(initialSteps = 0, initialDistance = 0, initialCalor
       }
     };
 
-    // 5. Connect motion listener to feed the Web Worker
+    // 5. Connect motion listeners (DeviceMotion + Generic Sensor API for Android PWAs)
+    let sensorObj: any = null;
+
     const handleDeviceMotion = (event: DeviceMotionEvent) => {
-      const accel = event.accelerationIncludingGravity;
+      const accel = event.accelerationIncludingGravity || event.acceleration;
       if (!accel || !workerRef.current) return;
 
+      const x = accel.x || 0;
+      const y = accel.y || 0;
+      const z = accel.z || 0;
+
       workerRef.current.postMessage({
-        x: accel.x || 0,
-        y: accel.y || 0,
-        z: accel.z || 0,
+        x,
+        y,
+        z,
         timestamp: Date.now()
       });
     };
 
     window.addEventListener("devicemotion", handleDeviceMotion);
 
+    // Fallback/Secondary sensor listener for Android Chrome / PWA standalone mode
+    if (typeof window !== "undefined" && "LinearAccelerationSensor" in window) {
+      try {
+        sensorObj = new (window as any).LinearAccelerationSensor({ frequency: 20 });
+        sensorObj.addEventListener("reading", () => {
+          if (workerRef.current && sensorObj) {
+            workerRef.current.postMessage({
+              x: sensorObj.x || 0,
+              y: (sensorObj.y || 0) + 9.81,
+              z: sensorObj.z || 0,
+              timestamp: Date.now()
+            });
+          }
+        });
+        sensorObj.start();
+      } catch (err) {
+        console.log("Generic sensor fallback inactive:", err);
+      }
+    }
+
     // Save tracking preference to localStorage
     localStorage.setItem("step_tracking_enabled", "true");
 
     return () => {
       window.removeEventListener("devicemotion", handleDeviceMotion);
+      if (sensorObj) {
+        try { sensorObj.stop(); } catch (e) {}
+      }
       if (workerRef.current) {
         workerRef.current.terminate();
         workerRef.current = null;
