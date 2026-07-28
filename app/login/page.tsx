@@ -31,6 +31,7 @@ export default function LoginPage() {
           className="shadow-xl rounded-2xl overflow-hidden"
         >
           <SignIn 
+            routing="hash"
             signUpUrl="/signup" 
             forceRedirectUrl="/dashboard"
           />
