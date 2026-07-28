@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
+import { useClerk } from "@clerk/nextjs";
 import { 
   Home, 
   Activity, 
@@ -18,7 +19,8 @@ import { motion } from "framer-motion";
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const { signOut } = useClerk();
 
   // If user is not logged in or not onboarded, we don't show the navigation bar
   if (!user || !user.isOnboarded) return null;
@@ -90,7 +92,7 @@ export default function Sidebar() {
             </div>
           </div>
           <button
-            onClick={() => logout()}
+            onClick={() => signOut({ redirectUrl: "/login" })}
             className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50/50 transition-all"
           >
             <LogOut className="w-5 h-5 text-gray-400 group-hover:text-red-500" />

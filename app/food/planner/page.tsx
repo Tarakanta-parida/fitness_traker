@@ -276,7 +276,6 @@ export default function MealPlannerPage() {
                 </div>
               </div>
 
-              // Weekly Grocery List Card
               <div id="grocery" className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-6 scroll-mt-6">
                 <div className="flex justify-between items-center">
                   <div>

@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 import { prisma } from "./db";
+import { auth, currentUser } from "@clerk/nextjs/server";
 
 const JWT_SECRET = process.env.JWT_SECRET || "lifetrack-super-secret-key-change-in-production";
 
@@ -27,17 +28,13 @@ export function verifyToken(token: string) {
 }
 
 export async function getSessionUser() {
-  const cookieStore = cookies();
-  const token = cookieStore.get("lifetrack_session")?.value;
-  
-  if (!token) return null;
-  
-  const decoded = verifyToken(token);
-  if (!decoded) return null;
-  
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+    const { userId } = await auth();
+    if (!userId) return null;
+
+    // Check if the user exists in our DB linked by clerkId
+    let user = await prisma.user.findUnique({
+      where: { clerkId: userId },
       select: {
         id: true,
         name: true,
@@ -54,8 +51,72 @@ export async function getSessionUser() {
         sleepTarget: true,
       },
     });
+
+    // If not found, attempt a lazy auto-registration from Clerk details
+    if (!user) {
+      const clerkUser = await currentUser();
+      if (clerkUser) {
+        const primaryEmail = clerkUser.emailAddresses[0]?.emailAddress;
+        const name = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || "User";
+
+        // Check if a user with this email already exists but lacks clerkId
+        const existingByEmail = await prisma.user.findUnique({
+          where: { email: primaryEmail },
+        });
+
+        if (existingByEmail) {
+          // Link existing email user to Clerk
+          user = await prisma.user.update({
+            where: { id: existingByEmail.id },
+            data: { clerkId: userId },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              age: true,
+              gender: true,
+              height: true,
+              weight: true,
+              goal: true,
+              budget: true,
+              isOnboarded: true,
+              createdAt: true,
+              stepsTarget: true,
+              sleepTarget: true,
+            },
+          });
+        } else {
+          // Create new user record
+          user = await prisma.user.create({
+            data: {
+              name,
+              email: primaryEmail,
+              clerkId: userId,
+              isOnboarded: false,
+            },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              age: true,
+              gender: true,
+              height: true,
+              weight: true,
+              goal: true,
+              budget: true,
+              isOnboarded: true,
+              createdAt: true,
+              stepsTarget: true,
+              sleepTarget: true,
+            },
+          });
+        }
+      }
+    }
+
     return user;
   } catch (error) {
+    console.error("Clerk session resolution error:", error);
     return null;
   }
 }

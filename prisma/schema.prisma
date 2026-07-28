@@ -11,7 +11,8 @@ model User {
   id           String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name         String          @db.VarChar(100)
   email        String          @unique @db.VarChar(150)
-  password     String          @db.VarChar(255)
+  password     String?         @db.VarChar(255)
+  clerkId      String?         @unique
   age          Int?            @default(28)
   gender       String?         @default("other") @db.VarChar(20)
   height       Decimal?        @default(175.00) @db.Decimal(5, 2)

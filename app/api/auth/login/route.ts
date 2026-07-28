@@ -27,6 +27,13 @@ export async function POST(request: Request) {
     }
 
     // Compare passwords
+    if (!user.password) {
+      return NextResponse.json(
+        { error: "This account uses social sign-in. Please log in with Google." },
+        { status: 401 }
+      );
+    }
+
     const isValid = await comparePassword(password, user.password);
     if (!isValid) {
       return NextResponse.json(
