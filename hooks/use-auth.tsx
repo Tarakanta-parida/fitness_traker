@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 interface UserProfile {
   id: string;
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const { isSignedIn, user: clerkUser, isLoaded } = useUser();
 
   const refreshUser = async () => {
     try {
@@ -53,8 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    refreshUser();
-  }, []);
+    if (isLoaded) {
+      refreshUser();
+    }
+  }, [isSignedIn, clerkUser?.id, isLoaded]);
+
 
   // Handle route protection
   useEffect(() => {
