@@ -221,12 +221,25 @@ export default function ReminderNotificationManager() {
           playSirenAlarm();
           setActiveAlert({ type: reminder.type, title, message });
 
-          // Send browser push notification if permitted
+          // Send system lockscreen notification via Service Worker if permitted
           if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-            new Notification(title, {
-              body: message,
-              icon: "/icon-192.png"
-            });
+            if ("serviceWorker" in navigator) {
+              navigator.serviceWorker.ready.then((registration) => {
+                registration.showNotification(title, {
+                  body: message,
+                  icon: "/icon-192.png",
+                  badge: "/icon-192.png",
+                  vibrate: [500, 250, 500, 250, 500],
+                  tag: reminder.type.toLowerCase(),
+                  renotify: true,
+                  data: { url: "/dashboard" }
+                } as any);
+              }).catch(() => {
+                new Notification(title, { body: message, icon: "/icon-192.png" });
+              });
+            } else {
+              new Notification(title, { body: message, icon: "/icon-192.png" });
+            }
           }
         }
       });
