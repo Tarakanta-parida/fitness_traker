@@ -17,6 +17,9 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
+import ThemeToggle from "@/components/theme/ThemeToggle";
+import GamificationBadge from "@/components/gamification/GamificationBadge";
+
 export default function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
@@ -37,16 +40,24 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 h-screen sticky top-0 left-0 p-6 justify-between shadow-sm">
-        <div className="flex flex-col gap-8">
-          {/* Logo / Brand */}
-          <div className="flex items-center gap-2 px-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-green-400 to-blue-500 flex items-center justify-center shadow-md">
-              <Sparkles className="w-5 h-5 text-white" />
+      <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 h-screen sticky top-0 left-0 p-6 justify-between shadow-sm">
+        <div className="flex flex-col gap-6">
+          {/* Logo / Brand & Theme Toggle */}
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-green-400 to-blue-500 flex items-center justify-center shadow-md">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
+                LifeTrack
+              </span>
             </div>
-            <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-              LifeTrack
-            </span>
+            <ThemeToggle />
+          </div>
+
+          {/* Compact Gamification Streak & Level Badge */}
+          <div className="px-2">
+            <GamificationBadge compact />
           </div>
 
           {/* Navigation Links */}

@@ -20,6 +20,10 @@ import {
   Download
 } from "lucide-react";
 import confetti from "canvas-confetti";
+import GamificationBadge from "@/components/gamification/GamificationBadge";
+import HealthScoreGauge from "@/components/dashboard/HealthScoreGauge";
+import QuickLoggerBar from "@/components/dashboard/QuickLoggerBar";
+import WeeklyReportModal from "@/components/dashboard/WeeklyReportModal";
 
 interface SummaryData {
   date: string;
@@ -49,6 +53,7 @@ export default function DashboardPage() {
   const [currentLocalDate, setCurrentLocalDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showWeeklyReport, setShowWeeklyReport] = useState(false);
   
   // Modal / Inputs state
   const [showStepsInput, setShowStepsInput] = useState(false);
@@ -372,24 +377,67 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-8 bg-gray-50/10 min-h-screen">
-      {/* Greetings */}
+      {/* Greetings & Action Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <span className="text-xs font-semibold text-blue-600 tracking-wider uppercase">Personal Coach</span>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mt-1 flex items-center gap-2">
+          <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 tracking-wider uppercase">Personal Coach</span>
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mt-1 flex items-center gap-2">
             {getGreeting()}, {user?.name.split(" ")[0]} <Sparkles className="w-6 h-6 text-yellow-400 fill-yellow-400" />
           </h1>
-          <p className="text-xs text-gray-450 mt-0.5">Let's check in on your habits for today.</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Let's check in on your habits for today.</p>
         </div>
-        <div className="text-left sm:text-right">
-          <span className="text-xs font-bold text-gray-400">TODAY'S DATE</span>
-          <p className="text-sm font-semibold text-gray-800 mt-0.5">
-            {currentLocalDate
-              ? currentLocalDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })
-              : new Date(data.date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
-          </p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowWeeklyReport(true)}
+            className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-2xl text-xs font-bold shadow-sm hover:scale-105 transition-all flex items-center gap-1.5"
+          >
+            <Award className="w-4 h-4 text-amber-300" /> Weekly Report
+          </button>
+          <div className="text-left sm:text-right hidden sm:block">
+            <span className="text-xs font-bold text-gray-400">TODAY'S DATE</span>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mt-0.5">
+              {currentLocalDate
+                ? currentLocalDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })
+                : new Date(data.date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+            </p>
+          </div>
         </div>
       </div>
+
+      {/* Gamification & Streak Banner */}
+      <GamificationBadge />
+
+      {/* Composite Health Score Gauge & Quick 1-Tap Logger */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="col-span-1 lg:col-span-2">
+          <HealthScoreGauge
+            stepsCurrent={pedometer.steps}
+            stepsTarget={data.stepsGoal}
+            waterCurrent={data.waterGlasses}
+            waterTarget={data.waterGoal}
+            sleepCurrent={Number(data.sleepHours || 0)}
+            sleepTarget={8}
+            caloriesCurrent={data.caloriesConsumed}
+            caloriesTarget={2000}
+          />
+        </div>
+        <div className="col-span-1">
+          <QuickLoggerBar onRefresh={fetchDashboardData} />
+        </div>
+      </div>
+
+      {/* Weekly Report Card Modal */}
+      <WeeklyReportModal
+        isOpen={showWeeklyReport}
+        onClose={() => setShowWeeklyReport(false)}
+        userName={user?.name}
+        totalSteps={pedometer.steps * 7}
+        avgWater={data.waterGlasses}
+        avgSleep={Number(data.sleepHours || 7.5)}
+        totalCalories={data.caloriesBurned * 7}
+      />
+
+      {/* PWA Install Promo Banner */}
 
       {/* PWA Install Promo Banner */}
       {isInstallable && (
