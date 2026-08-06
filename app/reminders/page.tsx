@@ -53,25 +53,20 @@ function getCountdownToTime(targetTimeStr: string): string {
 
 // Real-time countdown helper for frequency-based water reminders (24-hour cycle)
 function getCountdownToWater(intervalHrsStr: string): string {
-  const intervalHrs = parseInt(intervalHrsStr.match(/\d+/) ? intervalHrsStr.match(/\d+/)![0] : "2");
+  const interval = parseFloat(intervalHrsStr) || 2;
+  const intervalMins = Math.round(interval * 60);
   const now = new Date();
+
+  const currentMinutesFromMidnight = now.getHours() * 60 + now.getMinutes();
   
-  let next = new Date();
-  next.setMinutes(0, 0, 0);
+  let nextBoundaryMins = (Math.floor(currentMinutesFromMidnight / intervalMins) + 1) * intervalMins;
   
-  let nextHour = now.getHours();
-  if (now.getMinutes() > 0 || now.getSeconds() > 0) {
-    nextHour += 1;
-  }
-  
-  while (nextHour % intervalHrs !== 0) {
-    nextHour += 1;
-  }
-  
-  next.setHours(nextHour);
-  
+  const next = new Date(now);
+  next.setHours(0, 0, 0, 0);
+  next.setMinutes(nextBoundaryMins);
+
   const diffMs = next.getTime() - now.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
+  const diffSecs = Math.max(0, Math.floor(diffMs / 1000));
   
   const hrs = Math.floor(diffSecs / 3600);
   const mins = Math.floor((diffSecs % 3600) / 60);
@@ -126,8 +121,8 @@ export default function RemindersPage() {
         // Populate quick inputs if found
         const waterRem = formatted.find((r: any) => r.type === "WATER");
         if (waterRem) {
-          const hoursMatch = waterRem.repeat.match(/\d+/);
-          if (hoursMatch) setWaterInterval(hoursMatch[0]);
+          const match = waterRem.repeat.match(/(\d+(\.\d+)?)/);
+          if (match) setWaterInterval(match[1]);
         }
 
         const workRem = formatted.find((r: any) => r.type === "WORKOUT");
@@ -238,6 +233,7 @@ export default function RemindersPage() {
                   onChange={(e) => setWaterInterval(e.target.value)}
                   className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs bg-white focus:ring-1 focus:ring-blue-500"
                 >
+                  <option value="0.5">Every 30 Minutes</option>
                   <option value="1">Every Hour</option>
                   <option value="2">Every 2 Hours</option>
                   <option value="3">Every 3 Hours</option>

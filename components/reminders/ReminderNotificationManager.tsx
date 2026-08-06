@@ -202,13 +202,18 @@ export default function ReminderNotificationManager() {
           title = "🌙 Sleep Reminder!";
           message = "Time to wind down and prepare for sleep. Rest is key to recovery!";
         } else if (reminder.type === "WATER") {
-          // For periodic water intake, e.g. "Every 2 hours". Check if current minute is 00 and hour matches interval
-          const intervalHrs = parseInt(reminder.repeat.match(/\d+/) ? (reminder.repeat.match(/\d+/)![0]) : "2");
-          const hourNum = now.getHours();
-          const minNum = now.getMinutes();
+          // For periodic water intake (e.g. 0.5h / 30m, 1h, 2h, 3h).
+          let intervalMins = 120; // default 2 hours
+          const match = reminder.repeat.match(/(\d+(\.\d+)?)/);
+          if (match) {
+            intervalMins = Math.round(parseFloat(match[1]) * 60);
+          }
+          if (intervalMins <= 0) intervalMins = 120;
 
-          // Trigger on the hour mark if it fits the interval (e.g. divisible by N hours)
-          if (minNum === 0 && hourNum % intervalHrs === 0) {
+          const currentMinsFromMidnight = now.getHours() * 60 + now.getMinutes();
+
+          // Trigger on interval boundary (e.g. every 30 mins, 60 mins, 120 mins)
+          if (currentMinsFromMidnight % intervalMins === 0) {
             isTriggered = true;
             title = "💧 Hydration Reminder!";
             message = "Time to drink a fresh glass of water to stay hydrated!";

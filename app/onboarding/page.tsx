@@ -363,6 +363,7 @@ export default function OnboardingPage() {
                           onChange={(e) => setWaterInterval(e.target.value)}
                           className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs focus:ring-1 focus:ring-blue-500 bg-white"
                         >
+                          <option value="0.5">30 Minutes</option>
                           <option value="1">1 Hour</option>
                           <option value="2">2 Hours</option>
                           <option value="3">3 Hours</option>
