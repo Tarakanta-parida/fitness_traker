@@ -158,14 +158,20 @@ export default function FoodPage() {
             <Sparkles className="w-4 h-4 text-green-550" />
             Budget Meal Planner
           </Link>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            Log Custom Meal
           </button>
         </div>
       </div>
 
       {/* Macro Nutrient Breakdown */}
       <MacroBreakdown
-        proteinCurrent={totalProtein}
-        caloriesCurrent={totalCalories}
+        proteinCurrent={proteinToday}
+        caloriesCurrent={kcalToday}
         caloriesTarget={2000}
       />
 
