@@ -16,10 +16,30 @@ interface ReminderItem {
 export default function ReminderNotificationManager() {
   const { user } = useAuth();
   const [reminders, setReminders] = useState<ReminderItem[]>([]);
-  const [activeAlert, setActiveAlert] = useState<{ type: string; title: string; message: string } | null>(null);
+  const [activeAlert, setActiveAlert] = useState<{ 
+    type: string; 
+    title: string; 
+    message: string; 
+    alertCount: number; 
+    maxAlerts: number; 
+  } | null>(null);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const checkedTimesRef = useRef<Set<string>>(new Set());
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const sequenceTimersRef = useRef<NodeJS.Timeout[]>([]);
+  const isDismissedRef = useRef<boolean>(false);
+
+  // Clear all pending 3-repeat sequence timers
+  const clearAlertSequence = () => {
+    sequenceTimersRef.current.forEach(timer => clearTimeout(timer));
+    sequenceTimersRef.current = [];
+  };
+
+  const dismissAlert = () => {
+    isDismissedRef.current = true;
+    clearAlertSequence();
+    setActiveAlert(null);
+  };
 
   // 1. Fetch user's active reminders list
   const fetchReminders = async () => {
@@ -48,16 +68,13 @@ export default function ReminderNotificationManager() {
   useEffect(() => {
     if (user) {
       fetchReminders();
-      // Check if we need to request permission (if not granted/denied already)
       const hasAsked = localStorage.getItem("has_asked_sensors_permissions");
       if (!hasAsked) {
         setShowPermissionModal(true);
       }
 
-      // Add a periodic 30-second refetch to keep background manager updated
       const pollInterval = setInterval(fetchReminders, 30000);
 
-      // Listen for custom reminders-updated event dispatched by reminders/page.tsx
       const handleRemindersUpdated = () => {
         console.log("Reminders updated event detected. Refreshing manager...");
         fetchReminders();
@@ -73,7 +90,7 @@ export default function ReminderNotificationManager() {
     }
   }, [user]);
 
-  // Unlock AudioContext on first user interaction (safeguards browser auto-play policy)
+  // Unlock AudioContext on first user interaction
   useEffect(() => {
     const initAudio = () => {
       if (typeof window !== "undefined") {
@@ -129,8 +146,8 @@ export default function ReminderNotificationManager() {
         osc.frequency.setValueAtTime(880, now + i * 0.5 + 0.25);
       }
       
-      gain.gain.setValueAtTime(0.35, now); // slightly louder
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 5.0); // fade out over 5s
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 5.0);
       
       osc.start(now);
       osc.stop(now + 5.0);
@@ -142,8 +159,31 @@ export default function ReminderNotificationManager() {
   // 3. Vibration patterns
   const triggerVibration = () => {
     if (typeof navigator !== "undefined" && navigator.vibrate) {
-      // Vibrate 500ms, pause 250ms, vibrate 500ms
       navigator.vibrate([500, 250, 500, 250, 500]);
+    }
+  };
+
+  // Helper to send browser system notification
+  const sendSystemNotification = (title: string, message: string, count: number) => {
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+      const displayTitle = `${title} (Alert ${count}/3)`;
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.ready.then((registration) => {
+          registration.showNotification(displayTitle, {
+            body: message,
+            icon: "/icon-192.png",
+            badge: "/icon-192.png",
+            vibrate: [500, 250, 500, 250, 500],
+            tag: `reminder-${count}`,
+            renotify: true,
+            data: { url: "/dashboard" }
+          } as any);
+        }).catch(() => {
+          new Notification(displayTitle, { body: message, icon: "/icon-192.png" });
+        });
+      } else {
+        new Notification(displayTitle, { body: message, icon: "/icon-192.png" });
+      }
     }
   };
 
@@ -152,7 +192,6 @@ export default function ReminderNotificationManager() {
     localStorage.setItem("has_asked_sensors_permissions", "true");
     setShowPermissionModal(false);
 
-    // Request Notification permission
     if ("Notification" in window) {
       try {
         await Notification.requestPermission();
@@ -161,7 +200,6 @@ export default function ReminderNotificationManager() {
       }
     }
 
-    // Request DeviceMotion permission (for iOS)
     const DeviceMotionEventClass = (window as any).DeviceMotionEvent;
     if (
       DeviceMotionEventClass &&
@@ -175,7 +213,44 @@ export default function ReminderNotificationManager() {
     }
   };
 
-  // 5. Background Scheduler interval (runs every 15 seconds)
+  // Trigger 3-repeat notification alert sequence (Immediate, +12s, +24s)
+  const trigger3RepeatAlertSequence = (type: string, baseTitle: string, message: string) => {
+    clearAlertSequence();
+    isDismissedRef.current = false;
+
+    const fireSingleAlert = (count: number) => {
+      if (isDismissedRef.current) return;
+
+      triggerVibration();
+      playSirenAlarm();
+      sendSystemNotification(baseTitle, message, count);
+
+      setActiveAlert({
+        type,
+        title: baseTitle,
+        message,
+        alertCount: count,
+        maxAlerts: 3,
+      });
+    };
+
+    // Alert 1: Immediate
+    fireSingleAlert(1);
+
+    // Alert 2: 12 Seconds Later
+    const t2 = setTimeout(() => {
+      fireSingleAlert(2);
+    }, 12000);
+
+    // Alert 3: 24 Seconds Later (Final)
+    const t3 = setTimeout(() => {
+      fireSingleAlert(3);
+    }, 24000);
+
+    sequenceTimersRef.current = [t2, t3];
+  };
+
+  // 5. Background Scheduler interval (runs every 10 seconds)
   useEffect(() => {
     if (!user || reminders.length === 0) return;
 
@@ -185,7 +260,12 @@ export default function ReminderNotificationManager() {
       const currentMinutes = String(now.getMinutes()).padStart(2, "0");
       const currentTimeKey = `${currentHours}:${currentMinutes}`;
 
-      // Only alert once per minute
+      // Clean up old minute keys from checkedTimesRef to keep memory light
+      if (checkedTimesRef.current.size > 20) {
+        checkedTimesRef.current.clear();
+      }
+
+      // If already checked this exact minute key, skip re-triggering within the same minute
       if (checkedTimesRef.current.has(currentTimeKey)) return;
 
       reminders.forEach((reminder) => {
@@ -202,8 +282,7 @@ export default function ReminderNotificationManager() {
           title = "🌙 Sleep Reminder!";
           message = "Time to wind down and prepare for sleep. Rest is key to recovery!";
         } else if (reminder.type === "WATER") {
-          // For periodic water intake (e.g. 0.5h / 30m, 1h, 2h, 3h).
-          let intervalMins = 120; // default 2 hours
+          let intervalMins = 120;
           const match = reminder.repeat.match(/(\d+(\.\d+)?)/);
           if (match) {
             intervalMins = Math.round(parseFloat(match[1]) * 60);
@@ -212,7 +291,6 @@ export default function ReminderNotificationManager() {
 
           const currentMinsFromMidnight = now.getHours() * 60 + now.getMinutes();
 
-          // Trigger on interval boundary (e.g. every 30 mins, 60 mins, 120 mins)
           if (currentMinsFromMidnight % intervalMins === 0) {
             isTriggered = true;
             title = "💧 Hydration Reminder!";
@@ -222,47 +300,23 @@ export default function ReminderNotificationManager() {
 
         if (isTriggered) {
           checkedTimesRef.current.add(currentTimeKey);
-          triggerVibration();
-          playSirenAlarm();
-          setActiveAlert({ type: reminder.type, title, message });
-
-          // Send system lockscreen notification via Service Worker if permitted
-          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-            if ("serviceWorker" in navigator) {
-              navigator.serviceWorker.ready.then((registration) => {
-                registration.showNotification(title, {
-                  body: message,
-                  icon: "/icon-192.png",
-                  badge: "/icon-192.png",
-                  vibrate: [500, 250, 500, 250, 500],
-                  tag: reminder.type.toLowerCase(),
-                  renotify: true,
-                  data: { url: "/dashboard" }
-                } as any);
-              }).catch(() => {
-                new Notification(title, { body: message, icon: "/icon-192.png" });
-              });
-            } else {
-              new Notification(title, { body: message, icon: "/icon-192.png" });
-            }
-          }
+          trigger3RepeatAlertSequence(reminder.type, title, message);
         }
       });
     };
 
-    const timer = setInterval(checkRemindersInterval, 15000);
+    const timer = setInterval(checkRemindersInterval, 10000);
     return () => clearInterval(timer);
   }, [reminders, user]);
 
   const handleQuickLogWater = async () => {
-    setActiveAlert(null);
+    dismissAlert();
     try {
       await fetch("/api/dashboard/log-water", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: 1 }),
       });
-      // Fire celebratory details
       triggerVibration();
     } catch (e) {
       console.error(e);
@@ -279,16 +333,16 @@ export default function ReminderNotificationManager() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-gray-150 text-center"
+              className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-gray-150 dark:border-slate-800 text-center"
             >
-              <div className="w-12 h-12 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100/50">
+              <div className="w-12 h-12 bg-blue-50 dark:bg-blue-950/60 text-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100/50 dark:border-blue-900/50">
                 <Bell className="w-6 h-6 animate-swing" />
               </div>
-              <h3 className="text-base font-extrabold text-gray-900 leading-snug">
+              <h3 className="text-base font-extrabold text-gray-900 dark:text-white leading-snug">
                 Enable Active Motion <br />& Smart Reminders
               </h3>
-              <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-                Allow LifeTrack to access motion sensors to auto-count steps, and send alerts with sounds and vibrations when it's time to drink water or exercise.
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
+                Allow LifeTrack to access motion sensors to auto-count steps, and send 3-repeat alerts with sounds and vibrations when it's time to drink water or exercise.
               </p>
 
               <div className="mt-6 flex flex-col gap-2.5">
@@ -303,7 +357,7 @@ export default function ReminderNotificationManager() {
                     localStorage.setItem("has_asked_sensors_permissions", "true");
                     setShowPermissionModal(false);
                   }}
-                  className="w-full py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-550 rounded-2xl text-xs font-bold transition-all"
+                  className="w-full py-2.5 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-550 dark:text-gray-300 rounded-2xl text-xs font-bold transition-all"
                 >
                   Maybe Later
                 </button>
@@ -313,7 +367,7 @@ export default function ReminderNotificationManager() {
         )}
       </AnimatePresence>
 
-      {/* 2. Custom Alarm Reminder Alert Modal Overlay */}
+      {/* 2. Custom 3-Repeat Alarm Reminder Alert Modal Overlay */}
       <AnimatePresence>
         {activeAlert && (
           <div className="fixed bottom-6 right-6 z-[98] p-4 max-w-sm w-full">
@@ -321,17 +375,17 @@ export default function ReminderNotificationManager() {
               initial={{ y: 50, opacity: 0, scale: 0.95 }}
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 50, opacity: 0, scale: 0.95 }}
-              className="bg-white border border-gray-100 shadow-2xl rounded-3xl p-5 relative overflow-hidden flex flex-col gap-3"
+              className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-2xl rounded-3xl p-5 relative overflow-hidden flex flex-col gap-3 text-gray-900 dark:text-white"
             >
               <button 
-                onClick={() => setActiveAlert(null)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-gray-650"
+                onClick={dismissAlert}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-650 dark:hover:text-gray-200"
               >
                 <X className="w-4 h-4" />
               </button>
 
               <div className="flex gap-3 items-start">
-                <div className={`p-2.5 rounded-xl flex items-center justify-center text-white ${
+                <div className={`p-2.5 rounded-xl flex items-center justify-center text-white flex-shrink-0 ${
                   activeAlert.type === "WATER" ? "bg-indigo-600" :
                   activeAlert.type === "WORKOUT" ? "bg-blue-600" : "bg-purple-650"
                 }`}>
@@ -339,13 +393,18 @@ export default function ReminderNotificationManager() {
                    activeAlert.type === "WORKOUT" ? <Activity className="w-5 h-5" /> :
                    <Moon className="w-5 h-5" />}
                 </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-extrabold text-gray-800 tracking-tight leading-none">{activeAlert.title}</h4>
-                  <p className="text-[11px] text-gray-500 mt-1.5 leading-relaxed">{activeAlert.message}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-extrabold text-gray-800 dark:text-white tracking-tight leading-none truncate">{activeAlert.title}</h4>
+                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900 flex-shrink-0">
+                      Alert {activeAlert.alertCount}/3
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">{activeAlert.message}</p>
                 </div>
               </div>
 
-              <div className="flex gap-2 justify-end mt-2 pt-2 border-t border-gray-50">
+              <div className="flex gap-2 justify-end mt-2 pt-2 border-t border-gray-50 dark:border-slate-800">
                 {activeAlert.type === "WATER" && (
                   <button
                     onClick={handleQuickLogWater}
@@ -357,15 +416,15 @@ export default function ReminderNotificationManager() {
                 {activeAlert.type === "WORKOUT" && (
                   <a
                     href="/activity"
-                    onClick={() => setActiveAlert(null)}
+                    onClick={dismissAlert}
                     className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-750 text-white rounded-xl text-[10px] font-bold shadow-sm text-center"
                   >
                     Log Workout
                   </a>
                 )}
                 <button
-                  onClick={() => setActiveAlert(null)}
-                  className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-650 rounded-xl text-[10px] font-bold"
+                  onClick={dismissAlert}
+                  className="px-3 py-1.5 bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-650 dark:text-gray-300 rounded-xl text-[10px] font-bold"
                 >
                   Dismiss
                 </button>
