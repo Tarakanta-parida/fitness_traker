@@ -15,6 +15,32 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Background Sync Event: Sync offline steps to server when network reconnects
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-steps-data') {
+    event.waitUntil(syncBackgroundStepsToServer());
+  }
+});
+
+// Periodic Background Sync: Sync steps periodically even when app is closed
+self.addEventListener('periodicsync', (event) => {
+  if (event.tag === 'background-step-sync') {
+    event.waitUntil(syncBackgroundStepsToServer());
+  }
+});
+
+// Helper function to sync steps cached in IndexedDB to server
+async function syncBackgroundStepsToServer() {
+  try {
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (let client of clients) {
+      client.postMessage({ type: 'SYNC_OFFLINE_STEPS' });
+    }
+  } catch (err) {
+    console.log("Service Worker background step sync notice:", err);
+  }
+}
+
 // Handle Background Push Notifications (delivered when app/screen is closed)
 self.addEventListener('push', (event) => {
   let payload = { title: 'LifeTrack Health Alert', message: 'Time for your healthy habit check-in!' };

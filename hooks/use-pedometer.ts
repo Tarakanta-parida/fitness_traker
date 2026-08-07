@@ -10,7 +10,7 @@ export interface PedometerState {
   isWalking: boolean;
   isRunning: boolean;
   cadence: number;
-  engineState: string; // IDLE, MOVEMENT_DETECTED, CONFIRMED_WALKING, SHAKE, VEHICLE, etc.
+  engineState: string;
 }
 
 export function usePedometer(initialSteps = 0, initialDistance = 0, initialCalories = 0) {
@@ -24,12 +24,12 @@ export function usePedometer(initialSteps = 0, initialDistance = 0, initialCalor
     engineState: "IDLE"
   });
 
-  const [isTracking, setIsTracking] = useState(false);
+  const [isTracking, setIsTracking] = useState(true); // Default enabled for automatic background step tracking
   const workerRef = useRef<Worker | null>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Load offline cached steps for today on mount to prevent count resetting on page reload
+  // 1. Load offline cached steps for today on mount & register Background Sync
   useEffect(() => {
     async function loadTodayCache() {
       const todayStr = new Date().toLocaleDateString("sv-SE");
@@ -44,27 +44,76 @@ export function usePedometer(initialSteps = 0, initialDistance = 0, initialCalor
       }
     }
     loadTodayCache();
+
+    // Register PWA Background Sync and Periodic Sync if Service Worker is active
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker.ready.then(async (registration: any) => {
+        try {
+          if ("sync" in registration) {
+            await registration.sync.register("sync-steps-data");
+          }
+          if ("periodicSync" in registration) {
+            await registration.periodicSync.register("background-step-sync", {
+              minInterval: 15 * 60 * 1000 // Every 15 minutes
+            });
+          }
+        } catch (err) {
+          console.log("PWA Background Sync registration status:", err);
+        }
+      });
+
+      // Listen for background sync triggers sent from Service Worker
+      const handleSwMessage = (event: MessageEvent) => {
+        if (event.data && event.data.type === "SYNC_OFFLINE_STEPS") {
+          syncOfflineStepsWithServer();
+        }
+      };
+      navigator.serviceWorker.addEventListener("message", handleSwMessage);
+      return () => {
+        navigator.serviceWorker.removeEventListener("message", handleSwMessage);
+      };
+    }
   }, []);
 
-  // Sync offline caches immediately when internet connection returns
+  // 2. Sync offline caches when connection returns OR when user switches back to tab/app
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const handleOnline = () => {
-      console.log("Device is online. Triggering IndexedDB server sync...");
+    const handleSync = () => {
       syncOfflineStepsWithServer();
+      const todayStr = new Date().toLocaleDateString("sv-SE");
+      getLocalStepsForDate(todayStr).then(cached => {
+        if (cached && cached.steps > 0) {
+          setState(prev => ({
+            ...prev,
+            steps: Math.max(prev.steps, cached.steps),
+            distance: Math.max(prev.distance, cached.distance),
+            caloriesBurned: Math.max(prev.caloriesBurned, cached.calories)
+          }));
+        }
+      });
     };
 
-    window.addEventListener("online", handleOnline);
-    // Trigger a sync check on mount
-    handleOnline();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        handleSync();
+      }
+    };
+
+    window.addEventListener("online", handleSync);
+    window.addEventListener("focus", handleSync);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    handleSync();
 
     return () => {
-      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("online", handleSync);
+      window.removeEventListener("focus", handleSync);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
-  // Start / Stop Web Worker sensor loops
+  // 3. Start / Stop Web Worker sensor loops
   useEffect(() => {
     if (!isTracking) {
       if (workerRef.current) {
@@ -75,11 +124,9 @@ export function usePedometer(initialSteps = 0, initialDistance = 0, initialCalor
       return;
     }
 
-    // 1. Initialize Web Worker from static public route
     const worker = new Worker("/sensor-worker.js");
     workerRef.current = worker;
 
-    // 2. Handle verified steps and state changes returned by the worker
     worker.onmessage = async (e) => {
       const { type, count, isWalking, isRunning, frequency, state: engineState } = e.data;
 
@@ -87,10 +134,9 @@ export function usePedometer(initialSteps = 0, initialDistance = 0, initialCalor
         setState(prev => ({ ...prev, engineState }));
       } else if (type === "STEPS_DETECTED") {
         const stepDelta = count || 1;
-        const distDelta = stepDelta * 0.000762; // ~0.76 meters average stride
-        const kcalDelta = stepDelta * 0.04; // ~0.04 kcal per step average
+        const distDelta = stepDelta * 0.000762;
+        const kcalDelta = stepDelta * 0.04;
 
-        // Accumulate in memory state
         setState(prev => {
           const nextSteps = prev.steps + stepDelta;
           return {
@@ -104,17 +150,14 @@ export function usePedometer(initialSteps = 0, initialDistance = 0, initialCalor
           };
         });
 
-        // 3. Cache the step delta to IndexedDB for offline protection
         await cacheStepsOffline(stepDelta, distDelta, kcalDelta, Math.round(stepDelta * 0.6));
 
-        // 4. Try syncing to PostgreSQL if online
         if (navigator.onLine) {
           await syncOfflineStepsWithServer();
         }
       }
     };
 
-    // 5. Connect motion listeners (DeviceMotion + Generic Sensor API for Android PWAs)
     let sensorObj: any = null;
 
     const handleDeviceMotion = (event: DeviceMotionEvent) => {
@@ -135,7 +178,6 @@ export function usePedometer(initialSteps = 0, initialDistance = 0, initialCalor
 
     window.addEventListener("devicemotion", handleDeviceMotion);
 
-    // Fallback/Secondary sensor listener for Android Chrome / PWA standalone mode
     if (typeof window !== "undefined" && "LinearAccelerationSensor" in window) {
       try {
         sensorObj = new (window as any).LinearAccelerationSensor({ frequency: 20 });
@@ -155,7 +197,6 @@ export function usePedometer(initialSteps = 0, initialDistance = 0, initialCalor
       }
     }
 
-    // Save tracking preference to localStorage
     localStorage.setItem("step_tracking_enabled", "true");
 
     return () => {
@@ -170,7 +211,6 @@ export function usePedometer(initialSteps = 0, initialDistance = 0, initialCalor
     };
   }, [isTracking]);
 
-  // Request hardware sensor permission (required for iOS Safari)
   const requestPermission = async (): Promise<boolean> => {
     const DeviceMotionEventClass = (window as any).DeviceMotionEvent;
     if (
@@ -188,7 +228,6 @@ export function usePedometer(initialSteps = 0, initialDistance = 0, initialCalor
       }
       return false;
     }
-    // Android or standard Desktop Chrome requires no explicit prompt
     setIsTracking(true);
     return true;
   };
