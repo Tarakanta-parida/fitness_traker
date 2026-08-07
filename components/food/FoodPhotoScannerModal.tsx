@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Camera, 
@@ -14,7 +14,10 @@ import {
   DollarSign, 
   Utensils,
   RefreshCw,
-  Zap
+  Zap,
+  Video,
+  Image as ImageIcon,
+  AlertCircle
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
@@ -46,9 +49,97 @@ export default function FoodPhotoScannerModal({
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [logging, setLogging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Live Camera Viewfinder States
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraLoading, setCameraLoading] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
-  // Handle File Selection
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  // Clean up camera stream tracks when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      stopLiveCamera();
+      resetState();
+    }
+  }, [isOpen]);
+
+  // Start Live Camera Feed using WebRTC getUserMedia
+  const startLiveCamera = async () => {
+    setCameraError(null);
+    setCameraLoading(true);
+    setIsCameraActive(true);
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error("Camera API not supported on this browser.");
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: "environment" }, // Prefer rear camera on mobile
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+    } catch (err: any) {
+      console.error("Camera access error:", err);
+      setCameraError("Camera permission denied or camera unavailable. Try uploading a photo.");
+      stopLiveCamera();
+
+      // Trigger native mobile camera input fallback if WebRTC is blocked
+      cameraInputRef.current?.click();
+    } finally {
+      setCameraLoading(false);
+    }
+  };
+
+  // Stop Live Camera Tracks
+  const stopLiveCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  // Capture Frame from Live Camera Viewfinder
+  const captureLivePhoto = () => {
+    if (!videoRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const base64Str = canvas.toDataURL("image/jpeg", 0.9);
+
+    stopLiveCamera();
+    setSelectedImage(base64Str);
+    setFileName("instant_camera_snap.jpg");
+    setResult(null);
+    analyzePhoto(base64Str, "instant_camera_snap.jpg");
+  };
+
+  // Handle File Upload Selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -64,7 +155,7 @@ export default function FoodPhotoScannerModal({
     reader.readAsDataURL(file);
   };
 
-  // Trigger AI Photo Analysis
+  // Trigger AI Vision Photo Analysis
   const analyzePhoto = async (base64Image: string, name: string) => {
     setAnalyzing(true);
     try {
@@ -123,17 +214,19 @@ export default function FoodPhotoScannerModal({
   };
 
   const resetState = () => {
+    stopLiveCamera();
     setSelectedImage(null);
     setFileName("");
     setResult(null);
     setAnalyzing(false);
+    setCameraError(null);
   };
 
   if (!isOpen) return null;
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <motion.div
           initial={{ scale: 0.92, opacity: 0, y: 10 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -153,7 +246,7 @@ export default function FoodPhotoScannerModal({
                     Vision AI
                   </span>
                 </h3>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500">Upload a dish photo to auto-calculate calories & macros</p>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500">Snap a photo with camera or upload image</p>
               </div>
             </div>
             <button
@@ -164,6 +257,7 @@ export default function FoodPhotoScannerModal({
             </button>
           </div>
 
+          {/* Hidden File Inputs */}
           <input
             type="file"
             ref={fileInputRef}
@@ -171,26 +265,105 @@ export default function FoodPhotoScannerModal({
             accept="image/*"
             className="hidden"
           />
+          {/* Fallback Native Camera Input */}
+          <input
+            type="file"
+            ref={cameraInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+          />
 
-          {/* Upload Drop Zone / Image Display */}
-          {!selectedImage ? (
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 rounded-3xl p-8 text-center cursor-pointer transition-all bg-gray-50/50 dark:bg-slate-800/40 group my-2"
-            >
-              <div className="w-14 h-14 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-blue-100 dark:border-blue-900/50 group-hover:scale-110 transition-transform">
-                <Upload className="w-6 h-6" />
+          {/* LIVE CAMERA VIEW-FINDER */}
+          {isCameraActive ? (
+            <div className="space-y-4">
+              <div className="relative rounded-2xl overflow-hidden bg-slate-950 border border-gray-200 dark:border-slate-800 h-64 flex items-center justify-center">
+                <video
+                  ref={videoRef}
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                />
+                
+                {/* Camera Viewfinder Crosshair Target */}
+                <div className="absolute inset-8 border-2 border-dashed border-white/40 rounded-2xl pointer-events-none flex items-center justify-center">
+                  <div className="w-4 h-4 border-t-2 border-l-2 border-cyan-400 absolute top-2 left-2" />
+                  <div className="w-4 h-4 border-t-2 border-r-2 border-cyan-400 absolute top-2 right-2" />
+                  <div className="w-4 h-4 border-b-2 border-l-2 border-cyan-400 absolute bottom-2 left-2" />
+                  <div className="w-4 h-4 border-b-2 border-r-2 border-cyan-400 absolute bottom-2 right-2" />
+                  <span className="text-[10px] text-white/80 bg-slate-900/80 px-2 py-0.5 rounded-full font-bold">
+                    Align Dish Inside Frame
+                  </span>
+                </div>
+
+                {cameraLoading && (
+                  <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center gap-2">
+                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                    <span className="text-xs text-gray-300 font-bold">Opening Camera...</span>
+                  </div>
+                )}
               </div>
-              <h4 className="font-bold text-xs text-gray-800 dark:text-white">Upload or Snap Food Photo</h4>
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 max-w-xs mx-auto">
-                Supports JPG, PNG, WEBP. AI vision identifies dish name, calories, protein, and costs.
-              </p>
-              <button
-                type="button"
-                className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition-all inline-flex items-center gap-1.5"
-              >
-                <Camera className="w-3.5 h-3.5" /> Select Picture
-              </button>
+
+              {/* Camera Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={stopLiveCamera}
+                  className="flex-1 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-xs font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-300 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={captureLivePhoto}
+                  className="flex-[2] py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 text-white rounded-xl text-xs font-extrabold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <Camera className="w-4 h-4" />
+                  📸 Take Food Snap
+                </button>
+              </div>
+            </div>
+          ) : !selectedImage ? (
+            /* Upload / Camera Drop Zone Options */
+            <div className="space-y-3 my-2">
+              {cameraError && (
+                <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-900 text-amber-700 dark:text-amber-400 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{cameraError}</span>
+                </div>
+              )}
+
+              <div className="border-2 border-dashed border-gray-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 rounded-3xl p-6 text-center transition-all bg-gray-50/50 dark:bg-slate-800/40 group">
+                <div className="w-14 h-14 bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-3 border border-blue-100 dark:border-blue-900/50 group-hover:scale-110 transition-transform">
+                  <Camera className="w-7 h-7" />
+                </div>
+                <h4 className="font-extrabold text-sm text-gray-800 dark:text-white">Scan Your Meal Photo</h4>
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1 max-w-xs mx-auto">
+                  Instant camera snap or gallery upload. AI vision automatically calculates dish name, calories & protein.
+                </p>
+
+                {/* Instant Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 justify-center mt-5">
+                  <button
+                    type="button"
+                    onClick={startLiveCamera}
+                    className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-extrabold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95"
+                  >
+                    <Camera className="w-4 h-4 text-cyan-200 animate-pulse" />
+                    Open Camera (Instant Snap)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-5 py-2.5 border border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-200 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95"
+                  >
+                    <Upload className="w-4 h-4 text-blue-500" />
+                    Upload from Gallery
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
@@ -229,7 +402,7 @@ export default function FoodPhotoScannerModal({
 
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={resetState}
                   className="absolute bottom-3 right-3 p-2 bg-slate-900/80 hover:bg-slate-900 backdrop-blur-md text-white rounded-xl text-[10px] font-bold border border-white/10 flex items-center gap-1 transition-all"
                 >
                   <RefreshCw className="w-3 h-3" /> Change Photo
@@ -280,7 +453,7 @@ export default function FoodPhotoScannerModal({
 
                     <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-xl p-2 text-center">
                       <span className="text-[9px] text-gray-400 dark:text-gray-500 font-semibold block uppercase">Est. Cost</span>
-                      <span className="text-xs font-black text-gray-800 dark:text-gray-200 block mt-0.5">${result.estimatedCost}</span>
+                      <span className="text-xs font-black text-gray-800 dark:text-gray-200 block mt-0.5">₹{result.estimatedCost}</span>
                     </div>
                   </div>
 
