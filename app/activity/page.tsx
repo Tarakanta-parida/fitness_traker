@@ -166,9 +166,9 @@ export default function ActivityPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <span className="text-xs font-semibold text-blue-600 tracking-wider uppercase">Habit Loop</span>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mt-1">Activity Tracking</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Track your daily steps, distance, active routines, and device syncs.</p>
+          <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 tracking-wider uppercase">Habit Loop</span>
+          <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mt-1">Activity Tracking</h1>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Track your daily steps, distance, active routines, and device syncs.</p>
         </div>
 
         <div className="flex gap-3">
@@ -185,83 +185,83 @@ export default function ActivityPage() {
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Steps completeness */}
-        <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold text-gray-400 block uppercase">Steps Progress</span>
-            <span className="text-xs font-bold text-blue-600 bg-blue-50/50 px-2.5 py-1 rounded-full">{stepPercent}%</span>
+            <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 block uppercase">Steps Progress</span>
+            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-950/40 px-2.5 py-1 rounded-full">{stepPercent}%</span>
           </div>
           <div className="my-6">
-            <span className="text-3xl font-black text-gray-800">{stepsToday.toLocaleString()}</span>
-            <span className="text-xs text-gray-400 font-medium block mt-1">Goal: {stepsGoal.toLocaleString()} steps</span>
+            <span className="text-3xl font-black text-gray-800 dark:text-white">{stepsToday.toLocaleString()}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium block mt-1">Goal: {stepsGoal.toLocaleString()} steps</span>
           </div>
-          <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+          <div className="w-full bg-gray-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
             <div className="bg-blue-500 h-full rounded-full transition-all duration-500" style={{ width: `${stepPercent}%` }} />
           </div>
         </div>
 
         {/* Active Calories */}
-        <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold text-gray-400 block uppercase">Active Energy</span>
+            <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 block uppercase">Active Energy</span>
             <Flame className="w-5 h-5 text-green-500" />
           </div>
           <div className="my-6">
-            <span className="text-3xl font-black text-gray-800">{kcalToday} kcal</span>
-            <span className="text-xs text-gray-400 font-medium block mt-1">Total active calories burned today</span>
+            <span className="text-3xl font-black text-gray-800 dark:text-white">{kcalToday} kcal</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium block mt-1">Total active calories burned today</span>
           </div>
-          <div className="text-xs text-gray-500 flex items-center gap-1">
+          <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
             <TrendingUp className="w-4 h-4 text-green-550" />
             <span>Includes steps and logged exercises</span>
           </div>
         </div>
 
         {/* Active Minutes */}
-        <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold text-gray-400 block uppercase">Active Time</span>
+            <span className="text-xs font-semibold text-gray-400 dark:text-gray-500 block uppercase">Active Time</span>
             <Clock className="w-5 h-5 text-indigo-500" />
           </div>
           <div className="my-6">
-            <span className="text-3xl font-black text-gray-800">{activeMinsToday} mins</span>
-            <span className="text-xs text-gray-400 font-medium block mt-1">Total workout duration logged</span>
+            <span className="text-3xl font-black text-gray-800 dark:text-white">{activeMinsToday} mins</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium block mt-1">Total workout duration logged</span>
           </div>
-          <div className="text-xs text-gray-500">
-            Coach recommendation: <span className="font-semibold text-gray-800">30 mins daily</span>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Coach recommendation: <span className="font-semibold text-gray-800 dark:text-gray-200">30 mins daily</span>
           </div>
         </div>
       </div>
 
       {/* Exercise Logs History */}
-      <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-6">
-          <History className="w-5 h-5 text-gray-400" />
-          <h3 className="text-base font-bold text-gray-800 tracking-tight uppercase">Recent Workouts</h3>
+          <History className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+          <h3 className="text-base font-bold text-gray-800 dark:text-white tracking-tight uppercase">Recent Workouts</h3>
         </div>
 
         {exercises.length === 0 ? (
-          <div className="py-12 text-center text-xs text-gray-400 border border-dashed border-gray-200 rounded-2xl">
+          <div className="py-12 text-center text-xs text-gray-400 dark:text-gray-500 border border-dashed border-gray-200 dark:border-slate-800 rounded-2xl">
             No workouts logged yet. Use the 'Log Workout' button to add your first activity!
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-gray-100 text-gray-450 uppercase font-bold tracking-wider">
+                <tr className="border-b border-gray-100 dark:border-slate-800 text-gray-450 dark:text-gray-500 uppercase font-bold tracking-wider">
                   <th className="py-4 px-2">Activity Name</th>
                   <th className="py-4 px-2">Date Logged</th>
                   <th className="py-4 px-2">Duration</th>
                   <th className="py-4 px-2">Est. Burned</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
                 {exercises.map((ex) => (
-                  <tr key={ex.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="py-4 px-2 font-bold text-gray-800 capitalize">{ex.exerciseName}</td>
-                    <td className="py-4 px-2 text-gray-400">
+                  <tr key={ex.id} className="hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="py-4 px-2 font-bold text-gray-800 dark:text-gray-200 capitalize">{ex.exerciseName}</td>
+                    <td className="py-4 px-2 text-gray-400 dark:text-gray-500">
                       {new Date(ex.date).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
-                    <td className="py-4 px-2 text-gray-600 font-semibold">{ex.duration} mins</td>
-                    <td className="py-4 px-2 text-green-600 font-bold">-{ex.calories} kcal</td>
+                    <td className="py-4 px-2 text-gray-600 dark:text-gray-400 font-semibold">{ex.duration} mins</td>
+                    <td className="py-4 px-2 text-green-600 dark:text-green-400 font-bold">-{ex.calories} kcal</td>
                   </tr>
                 ))}
               </tbody>
@@ -278,18 +278,18 @@ export default function ActivityPage() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-lg border border-gray-50"
+              className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-lg border border-gray-50 dark:border-slate-800 text-gray-900 dark:text-white"
             >
-              <h3 className="text-base font-bold text-gray-800 mb-1">Log Workout</h3>
-              <p className="text-xs text-gray-400 mb-4 font-medium">Record a physical routine to update active statistics.</p>
+              <h3 className="text-base font-bold text-gray-800 dark:text-white mb-1">Log Workout</h3>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-4 font-medium">Record a physical routine to update active statistics.</p>
               
               <form onSubmit={handleLogExercise} className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-semibold text-gray-550 uppercase mb-1">Select Activity</label>
+                  <label className="block text-[10px] font-semibold text-gray-550 dark:text-gray-400 uppercase mb-1">Select Activity</label>
                   <select
                     value={exerciseName}
                     onChange={(e) => setExerciseName(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-xs bg-white focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-3 py-2.5 border border-gray-200 dark:border-slate-700 rounded-xl text-xs bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="Running">Running</option>
                     <option value="Cycling">Cycling</option>
@@ -301,24 +301,24 @@ export default function ActivityPage() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-semibold text-gray-550 uppercase mb-1">Duration (mins)</label>
+                    <label className="block text-[10px] font-semibold text-gray-550 dark:text-gray-400 uppercase mb-1">Duration (mins)</label>
                     <input
                       type="number"
                       required
                       value={duration}
                       onChange={(e) => setDuration(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs focus:ring-1 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-xl text-xs bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-1 focus:ring-blue-500"
                       placeholder="e.g. 30"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-gray-550 uppercase mb-1">Energy Burned (kcal)</label>
+                    <label className="block text-[10px] font-semibold text-gray-550 dark:text-gray-400 uppercase mb-1">Energy Burned (kcal)</label>
                     <input
                       type="number"
                       required
                       value={calories}
                       onChange={(e) => setCalories(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-xs bg-gray-50/50"
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-slate-700 rounded-xl text-xs bg-gray-50/50 dark:bg-slate-800/50 text-gray-900 dark:text-white"
                       placeholder="Estimated"
                     />
                   </div>
@@ -328,7 +328,7 @@ export default function ActivityPage() {
                   <button
                     type="button"
                     onClick={() => { setShowLogModal(false); }}
-                    className="px-4 py-2 border border-gray-200 rounded-xl text-xs font-semibold hover:bg-gray-50 text-gray-600"
+                    className="px-4 py-2 border border-gray-200 dark:border-slate-700 rounded-xl text-xs font-semibold hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-300"
                   >
                     Cancel
                   </button>
