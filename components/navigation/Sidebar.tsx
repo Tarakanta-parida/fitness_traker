@@ -42,24 +42,25 @@ export default function Sidebar() {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 h-screen sticky top-0 left-0 p-5 justify-between shadow-sm z-30 overflow-y-auto">
         <div className="flex flex-col gap-5">
-          {/* Logo / Brand Header & Theme Toggle */}
-          <div className="flex items-center justify-between gap-2 pb-3 border-b border-gray-100 dark:border-slate-800/80">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-green-400 via-emerald-500 to-blue-500 flex items-center justify-center shadow-md flex-shrink-0">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="font-black text-lg bg-gradient-to-r from-blue-600 to-green-600 dark:from-blue-400 dark:to-green-400 bg-clip-text text-transparent truncate tracking-tight leading-none">
-                  LifeTrack
-                </span>
-                <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 tracking-wider uppercase truncate mt-0.5">
-                  Fitness Tracker
-                </span>
-              </div>
+          {/* Logo / Brand Header */}
+          <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-slate-800/80">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-green-400 via-emerald-500 to-blue-500 flex items-center justify-center shadow-md flex-shrink-0">
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <div className="flex-shrink-0">
-              <ThemeToggle />
+            <div className="flex flex-col min-w-0">
+              <span className="font-black text-xl bg-gradient-to-r from-blue-600 to-green-600 dark:from-blue-400 dark:to-green-400 bg-clip-text text-transparent truncate tracking-tight leading-none">
+                LifeTrack
+              </span>
+              <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 tracking-wider uppercase truncate mt-0.5">
+                Fitness Tracker
+              </span>
             </div>
+          </div>
+
+          {/* Theme Switcher Bar */}
+          <div className="flex items-center justify-between px-3 py-2 rounded-2xl bg-gray-50/80 dark:bg-slate-800/60 border border-gray-100 dark:border-slate-800">
+            <span className="text-xs font-bold text-gray-500 dark:text-gray-400">Theme</span>
+            <ThemeToggle />
           </div>
 
           {/* Compact Gamification Streak & Level Badge */}
