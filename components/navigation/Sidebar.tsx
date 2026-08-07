@@ -40,23 +40,30 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 h-screen sticky top-0 left-0 p-6 justify-between shadow-sm">
-        <div className="flex flex-col gap-6">
-          {/* Logo / Brand & Theme Toggle */}
-          <div className="flex items-center justify-between px-2">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-green-400 to-blue-500 flex items-center justify-center shadow-md">
+      <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-800 h-screen sticky top-0 left-0 p-5 justify-between shadow-sm z-30 overflow-y-auto">
+        <div className="flex flex-col gap-5">
+          {/* Logo / Brand Header & Theme Toggle */}
+          <div className="flex items-center justify-between gap-2 pb-3 border-b border-gray-100 dark:border-slate-800/80">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-green-400 via-emerald-500 to-blue-500 flex items-center justify-center shadow-md flex-shrink-0">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
-              <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                LifeTrack
-              </span>
+              <div className="flex flex-col min-w-0">
+                <span className="font-black text-lg bg-gradient-to-r from-blue-600 to-green-600 dark:from-blue-400 dark:to-green-400 bg-clip-text text-transparent truncate tracking-tight leading-none">
+                  LifeTrack
+                </span>
+                <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 tracking-wider uppercase truncate mt-0.5">
+                  Fitness Tracker
+                </span>
+              </div>
             </div>
-            <ThemeToggle />
+            <div className="flex-shrink-0">
+              <ThemeToggle />
+            </div>
           </div>
 
           {/* Compact Gamification Streak & Level Badge */}
-          <div className="px-2">
+          <div className="w-full">
             <GamificationBadge compact />
           </div>
 
@@ -70,20 +77,20 @@ export default function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all relative ${
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all relative ${
                     isActive 
-                      ? "text-blue-600" 
-                      : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+                      ? "text-blue-600 dark:text-blue-400" 
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-slate-800/60"
                   }`}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="active-nav-bg"
-                      className="absolute inset-0 bg-blue-50/50 rounded-xl -z-10 border border-blue-100/50"
+                      className="absolute inset-0 bg-blue-50/70 dark:bg-blue-950/40 rounded-xl -z-10 border border-blue-100/50 dark:border-blue-900/50"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
-                  <Icon className={`w-5 h-5 ${isActive ? "text-blue-500" : "text-gray-400"}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? "text-blue-500 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}`} />
                   {item.label}
                 </Link>
               );
@@ -92,28 +99,28 @@ export default function Sidebar() {
         </div>
 
         {/* User Card & LogOut */}
-        <div className="flex flex-col gap-4 border-t border-gray-50 pt-4">
-          <div className="flex items-center gap-3 px-2">
-            <div className="font-extrabold text-xl text-blue-600 tracking-tight leading-none px-2 select-none">
+        <div className="flex flex-col gap-3 border-t border-gray-100 dark:border-slate-800 pt-4 mt-auto">
+          <div className="flex items-center gap-3 px-1">
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-950/80 border border-blue-200 dark:border-blue-900/60 font-extrabold text-sm text-blue-600 dark:text-blue-400 flex items-center justify-center flex-shrink-0 select-none">
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-semibold text-gray-800 truncate">{user.name}</span>
-              <span className="text-xs text-gray-400 truncate">{user.email}</span>
+              <span className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate">{user.name}</span>
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{user.email}</span>
             </div>
           </div>
           <button
             onClick={() => signOut({ redirectUrl: "/login" })}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50/50 transition-all"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/50 dark:hover:bg-red-950/30 transition-all"
           >
-            <LogOut className="w-5 h-5 text-gray-400 group-hover:text-red-500" />
+            <LogOut className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-red-500" />
             Sign Out
           </button>
         </div>
       </aside>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-100 px-2 py-1.5 flex justify-between items-center z-50 shadow-lg pb-safe">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-gray-100 dark:border-slate-800 px-2 py-1.5 flex justify-between items-center z-50 shadow-lg pb-safe">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
@@ -133,12 +140,12 @@ export default function Sidebar() {
               )}
               <Icon 
                 className={`w-4.5 h-4.5 transition-colors ${
-                  isActive ? "text-blue-500" : "text-gray-400"
+                  isActive ? "text-blue-500 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"
                 }`} 
               />
               <span 
                 className={`text-[9px] font-bold tracking-tight transition-colors truncate w-full text-center ${
-                  isActive ? "text-blue-600" : "text-gray-400"
+                  isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"
                 }`}
               >
                 {item.label}
