@@ -18,24 +18,14 @@ import {
 } from "lucide-react";
 import confetti from "canvas-confetti";
 
+import { useTheme } from "@/components/theme/ThemeProvider";
+
 export default function ProfilePage() {
   const { user, refreshUser, logout } = useAuth();
-  
-  // Theme State
-  const [activeTheme, setActiveTheme] = useState("light");
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") || "light";
-    setActiveTheme(savedTheme);
-  }, []);
+  const { theme, setTheme } = useTheme();
 
   const handleThemeChange = (newTheme: string) => {
-    document.body.classList.remove("theme-light", "theme-dark", "theme-forest");
-    if (newTheme !== "light") {
-      document.body.classList.add("theme-" + newTheme);
-    }
-    localStorage.setItem("theme", newTheme);
-    setActiveTheme(newTheme);
+    setTheme(newTheme as any);
     confetti({
       particleCount: 40,
       spread: 30,
@@ -198,7 +188,7 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => handleThemeChange("light")}
                 className={`p-2 rounded-xl border text-center transition-all ${
-                  activeTheme === "light"
+                  theme === "light"
                     ? "border-blue-500 bg-blue-50/50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-bold"
                     : "border-gray-200 dark:border-slate-700 text-gray-550 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
                 }`}
@@ -211,7 +201,7 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => handleThemeChange("dark")}
                 className={`p-2 rounded-xl border text-center transition-all ${
-                  activeTheme === "dark"
+                  theme === "dark"
                     ? "border-blue-500 bg-blue-900/10 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-bold"
                     : "border-gray-200 dark:border-slate-700 text-gray-550 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
                 }`}
@@ -222,15 +212,15 @@ export default function ProfilePage() {
 
               <button
                 type="button"
-                onClick={() => handleThemeChange("forest")}
+                onClick={() => handleThemeChange("cyberpunk")}
                 className={`p-2 rounded-xl border text-center transition-all ${
-                  activeTheme === "forest"
-                    ? "border-green-600 bg-green-50 dark:bg-green-950/50 text-green-700 dark:text-green-400 font-bold"
+                  theme === "cyberpunk"
+                    ? "border-cyan-500 bg-cyan-950/50 text-cyan-400 font-bold"
                     : "border-gray-200 dark:border-slate-700 text-gray-550 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
                 }`}
               >
-                <div className="w-3.5 h-3.5 rounded-full bg-green-500 border border-green-600 mx-auto mb-1" />
-                <span className="text-[9px] block">Forest</span>
+                <div className="w-3.5 h-3.5 rounded-full bg-cyan-500 border border-cyan-400 mx-auto mb-1" />
+                <span className="text-[9px] block">Cyberpunk</span>
               </button>
             </div>
           </div>
