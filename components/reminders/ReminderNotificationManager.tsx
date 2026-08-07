@@ -259,53 +259,83 @@ export default function ReminderNotificationManager() {
       const currentHours = String(now.getHours()).padStart(2, "0");
       const currentMinutes = String(now.getMinutes()).padStart(2, "0");
       const currentTimeKey = `${currentHours}:${currentMinutes}`;
-
-      // Clean up old minute keys from checkedTimesRef to keep memory light
-      if (checkedTimesRef.current.size > 20) {
-        checkedTimesRef.current.clear();
-      }
-
-      // If already checked this exact minute key, skip re-triggering within the same minute
-      if (checkedTimesRef.current.has(currentTimeKey)) return;
+      const nowMs = Date.now();
 
       reminders.forEach((reminder) => {
         let isTriggered = false;
         let title = "LifeTrack Reminder";
         let message = "";
 
-        if (reminder.type === "WORKOUT" && reminder.time === currentTimeKey) {
-          isTriggered = true;
-          title = "🏋️ Workout Reminder!";
-          message = "Time for your scheduled workout routine. Stay active, stay strong!";
-        } else if (reminder.type === "SLEEP" && reminder.time === currentTimeKey) {
-          isTriggered = true;
-          title = "🌙 Sleep Reminder!";
-          message = "Time to wind down and prepare for sleep. Rest is key to recovery!";
-        } else if (reminder.type === "WATER") {
-          let intervalMins = 120;
-          const match = reminder.repeat.match(/(\d+(\.\d+)?)/);
-          if (match) {
-            intervalMins = Math.round(parseFloat(match[1]) * 60);
+        const lastTriggeredKey = `reminder_last_triggered_${reminder.id}`;
+        const lastTriggeredTime = parseInt(localStorage.getItem(lastTriggeredKey) || "0", 10);
+
+        // Check if reminder has a recurring interval (e.g., WATER or interval_0.5h / interval_1h)
+        let intervalMins = 0;
+        const intervalMatch = reminder.repeat.match(/(\d+(\.\d+)?)/);
+        
+        if (reminder.type === "WATER" || reminder.repeat.includes("interval")) {
+          if (intervalMatch) {
+            intervalMins = Math.round(parseFloat(intervalMatch[1]) * 60);
+          } else {
+            intervalMins = 120; // Default 2 hours
           }
-          if (intervalMins <= 0) intervalMins = 120;
+        }
 
+        if (intervalMins > 0) {
+          const intervalMs = intervalMins * 60 * 1000;
+          const timeSinceLastAlert = nowMs - lastTriggeredTime;
+
+          // Check if time since last alert exceeded the set interval (e.g. 30 mins or 60 mins)
+          // OR if current time hits exact clock boundary
           const currentMinsFromMidnight = now.getHours() * 60 + now.getMinutes();
+          const isClockBoundary = (currentMinsFromMidnight % intervalMins === 0);
 
-          if (currentMinsFromMidnight % intervalMins === 0) {
+          if (lastTriggeredTime === 0) {
+            // First time setup: set last triggered to now and skip immediate alert to prevent spam on reload
+            localStorage.setItem(lastTriggeredKey, nowMs.toString());
+          } else if (timeSinceLastAlert >= intervalMs || (isClockBoundary && timeSinceLastAlert > 60000)) {
             isTriggered = true;
-            title = "💧 Hydration Reminder!";
-            message = "Time to drink a fresh glass of water to stay hydrated!";
+            if (reminder.type === "WATER") {
+              const label = intervalMins < 60 ? `${intervalMins} minutes` : `${intervalMins / 60} hour(s)`;
+              title = "💧 Hydration Reminder!";
+              message = `Time to drink a fresh glass of water! (Repeats every ${label})`;
+            } else if (reminder.type === "WORKOUT") {
+              title = "🏋️ Workout Interval!";
+              message = "Time for your scheduled workout routine. Stay active, stay strong!";
+            } else {
+              title = `⏰ ${reminder.type} Reminder!`;
+              message = "Time for your scheduled health habit check-in!";
+            }
+          }
+        } else {
+          // Specific time reminder (HH:MM format)
+          if (reminder.time === currentTimeKey && !checkedTimesRef.current.has(`${reminder.id}_${currentTimeKey}`)) {
+            isTriggered = true;
+            checkedTimesRef.current.add(`${reminder.id}_${currentTimeKey}`);
+
+            if (reminder.type === "WORKOUT") {
+              title = "🏋️ Workout Reminder!";
+              message = "Time for your scheduled workout routine. Stay active, stay strong!";
+            } else if (reminder.type === "SLEEP") {
+              title = "🌙 Sleep Reminder!";
+              message = "Time to wind down and prepare for sleep. Rest is key to recovery!";
+            } else {
+              title = `⏰ ${reminder.type} Reminder!`;
+              message = "Time for your scheduled health habit check-in!";
+            }
           }
         }
 
         if (isTriggered) {
-          checkedTimesRef.current.add(currentTimeKey);
+          localStorage.setItem(lastTriggeredKey, nowMs.toString());
           trigger3RepeatAlertSequence(reminder.type, title, message);
         }
       });
     };
 
     const timer = setInterval(checkRemindersInterval, 10000);
+    checkRemindersInterval(); // Check immediately on mount/update
+
     return () => clearInterval(timer);
   }, [reminders, user]);
 
