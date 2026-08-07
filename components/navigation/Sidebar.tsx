@@ -44,8 +44,12 @@ export default function Sidebar() {
         <div className="flex flex-col gap-5">
           {/* Logo / Brand Header */}
           <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-slate-800/80">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-green-400 via-emerald-500 to-blue-500 flex items-center justify-center shadow-md flex-shrink-0">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-2xl bg-white p-1 shadow-md border border-gray-100 dark:border-slate-800 flex items-center justify-center flex-shrink-0">
+              <img
+                src="/app-logo.png"
+                alt="LifeTrack Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="flex flex-col min-w-0">
               <span className="font-black text-xl bg-gradient-to-r from-blue-600 to-green-600 dark:from-blue-400 dark:to-green-400 bg-clip-text text-transparent truncate tracking-tight leading-none">
