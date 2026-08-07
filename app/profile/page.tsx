@@ -172,58 +172,6 @@ export default function ProfilePage() {
               </button>
             </div>
           </div>
-
-          {/* Theme Preferences Card */}
-          <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm flex flex-col space-y-4">
-            <div>
-              <h3 className="font-bold text-xs text-gray-800 dark:text-white uppercase tracking-tight flex items-center gap-1.5">
-                <Settings className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                Theme Preferences
-              </h3>
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">Choose your dashboard style and color scheme.</p>
-            </div>
-            
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleThemeChange("light")}
-                className={`p-2 rounded-xl border text-center transition-all ${
-                  theme === "light"
-                    ? "border-blue-500 bg-blue-50/50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-bold"
-                    : "border-gray-200 dark:border-slate-700 text-gray-550 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
-                }`}
-              >
-                <div className="w-3.5 h-3.5 rounded-full bg-white border border-gray-300 mx-auto mb-1" />
-                <span className="text-[9px] block">Light</span>
-              </button>
-              
-              <button
-                type="button"
-                onClick={() => handleThemeChange("dark")}
-                className={`p-2 rounded-xl border text-center transition-all ${
-                  theme === "dark"
-                    ? "border-blue-500 bg-blue-900/10 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-bold"
-                    : "border-gray-200 dark:border-slate-700 text-gray-550 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
-                }`}
-              >
-                <div className="w-3.5 h-3.5 rounded-full bg-slate-900 border border-slate-700 mx-auto mb-1" />
-                <span className="text-[9px] block">Dark</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleThemeChange("cyberpunk")}
-                className={`p-2 rounded-xl border text-center transition-all ${
-                  theme === "cyberpunk"
-                    ? "border-cyan-500 bg-cyan-950/50 text-cyan-400 font-bold"
-                    : "border-gray-200 dark:border-slate-700 text-gray-550 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800"
-                }`}
-              >
-                <div className="w-3.5 h-3.5 rounded-full bg-cyan-500 border border-cyan-400 mx-auto mb-1" />
-                <span className="text-[9px] block">Cyberpunk</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Edit Form */}
