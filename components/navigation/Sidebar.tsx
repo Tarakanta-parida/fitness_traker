@@ -46,7 +46,7 @@ export default function Sidebar() {
           <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-slate-800/80">
             <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
               <img
-                src="/app-logo.png"
+                src="/app-logo.svg"
                 alt="LifeTrack Logo"
                 className="w-full h-full object-contain"
               />

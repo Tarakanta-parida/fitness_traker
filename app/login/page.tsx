@@ -16,7 +16,7 @@ export default function LoginPage() {
           className="w-16 h-16 flex items-center justify-center mb-4"
         >
           <img
-            src="/app-logo.png"
+            src="/app-logo.svg"
             alt="LifeTrack Logo"
             className="w-full h-full object-contain filter drop-shadow-md"
           />

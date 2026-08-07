@@ -66,9 +66,9 @@ export default function MotivationalSplashScreen() {
               <div className="absolute -inset-4 bg-gradient-to-r from-emerald-400 via-teal-500 to-blue-500 rounded-full blur-2xl opacity-50 animate-pulse" />
               <div className="relative w-28 h-28 flex items-center justify-center">
                 <img
-                  src="/app-logo.png"
+                  src="/app-logo.svg"
                   alt="LifeTrack Logo"
-                  className="w-full h-full object-contain filter drop-shadow-[0_10px_25px_rgba(16,185,129,0.4)]"
+                  className="w-full h-full object-contain filter drop-shadow-[0_10px_25px_rgba(16,185,129,0.5)]"
                 />
               </div>
             </motion.div>

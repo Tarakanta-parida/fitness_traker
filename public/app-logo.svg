@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="leafGrad1" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="45%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <linearGradient id="leafGrad2" x1="0%" y1="80%" x2="90%" y2="10%">
+      <stop offset="0%" stop-color="#0ea5e9" />
+      <stop offset="50%" stop-color="#14b8a6" />
+      <stop offset="100%" stop-color="#34d399" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main Swooping Bottom Leaf -->
+  <path d="M 135 435 C 210 465 310 440 375 385 C 445 325 455 215 455 215 C 455 215 400 295 315 325 C 235 355 170 345 145 390 C 135 405 130 422 135 435 Z" fill="url(#leafGrad1)" />
+  
+  <!-- Center Main Curving Leaf -->
+  <path d="M 140 395 C 120 290 195 210 270 175 C 345 140 405 50 405 50 C 405 50 380 160 305 210 C 235 255 175 295 155 370 C 148 380 144 388 140 395 Z" fill="url(#leafGrad2)" />
+  
+  <!-- Middle Top Leaf -->
+  <path d="M 235 165 C 235 120 260 80 285 70 C 290 88 285 125 260 148 C 248 158 240 162 235 165 Z" fill="url(#leafGrad2)" />
+  
+  <!-- Left Top Leaf -->
+  <path d="M 158 210 C 150 150 175 105 210 90 C 220 115 210 165 180 195 C 170 205 162 208 158 210 Z" fill="url(#leafGrad1)" />
+</svg>
