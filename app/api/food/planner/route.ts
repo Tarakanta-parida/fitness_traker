@@ -236,28 +236,27 @@ export async function POST(request: Request) {
     const today = new Date();
     const currentWeek = `${today.getFullYear()}-W${Math.floor(today.getDate() / 7) + 1}`;
 
-    // Define items to add to the grocery list table based on diet preference
+    // Define items to add to the grocery list table based on diet preference (in Indian Rupees ₹)
     const vegGroceryItems = [
-      { item: "Organic Oats", quantity: "1 Pack", price: 3.50 },
-      { item: "Whole Milk", quantity: "2 Liters", price: 2.80 },
-      { item: "Organic Bananas", quantity: "1 Dozen", price: 2.00 },
-      { item: "Fresh Paneer", quantity: "1 kg", price: 8.50 },
-      { item: "Mixed Vegetables (Broccoli, Carrots)", quantity: "1.5 kg", price: 6.00 },
-      { item: "Greek Yogurt", quantity: "6 Packs", price: 9.00 },
-      { item: "Whole Wheat Bread", quantity: "2 Loaves", price: 4.00 },
-      { item: "Mixed Dry Fruits", quantity: "250g", price: 5.50 },
+      { item: "Fresh Paneer (Dairy)", quantity: "1 kg", price: 380 },
+      { item: "Rolled Oats / Poha", quantity: "1 kg Pack", price: 120 },
+      { item: "Tone Milk", quantity: "3 Liters", price: 180 },
+      { item: "Toor & Chana Dal", quantity: "2 kg", price: 210 },
+      { item: "Fresh Sabzi (Spinach, Tomatoes, Beans)", quantity: "2 kg", price: 140 },
+      { item: "Whole Wheat Atta", quantity: "5 kg", price: 220 },
+      { item: "High-Protein Soya Chunks", quantity: "500g", price: 65 },
+      { item: "Almonds & Roasted Chana", quantity: "250g", price: 160 },
     ];
 
     const nonVegGroceryItems = [
-      { item: "Organic Oats", quantity: "1 Pack", price: 3.50 },
-      { item: "Whole Milk", quantity: "2 Liters", price: 2.80 },
-      { item: "Organic Bananas", quantity: "1 Dozen", price: 2.00 },
-      { item: "Chicken Breast", quantity: "2 kg", price: 14.50 },
-      { item: "Farm Fresh Eggs", quantity: "30 units", price: 6.00 },
-      { item: "Mixed Vegetables (Broccoli, Carrots)", quantity: "1.5 kg", price: 6.00 },
-      { item: "Greek Yogurt", quantity: "6 Packs", price: 9.00 },
-      { item: "Whole Wheat Bread", quantity: "2 Loaves", price: 4.00 },
-      { item: "Mixed Dry Fruits", quantity: "250g", price: 5.50 },
+      { item: "Fresh Chicken Breast / Curry Cut", quantity: "1.5 kg", price: 340 },
+      { item: "Farm Fresh Eggs", quantity: "30 units (1 Tray)", price: 180 },
+      { item: "Rolled Oats / Poha", quantity: "1 kg Pack", price: 120 },
+      { item: "Tone Milk", quantity: "3 Liters", price: 180 },
+      { item: "Basmati Rice / Wheat Atta", quantity: "5 kg", price: 240 },
+      { item: "Fresh Green Veggies (Tomato, Onion, Palak)", quantity: "2 kg", price: 140 },
+      { item: "High-Protein Soya Chunks", quantity: "500g", price: 65 },
+      { item: "Almonds & Roasted Chana", quantity: "250g", price: 160 },
     ];
 
     const targetList = dietPreference === "veg" ? vegGroceryItems : nonVegGroceryItems;

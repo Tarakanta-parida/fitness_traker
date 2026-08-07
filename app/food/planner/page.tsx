@@ -36,13 +36,13 @@ interface GroceryItem {
 }
 
 const formatPrice = (val: number) => {
-  return val > 15 ? `₹${val.toFixed(0)}` : `$${val.toFixed(2)}`;
+  return `₹${Math.round(val)}`;
 };
 
 export default function MealPlannerPage() {
   const { user } = useAuth();
   const [dietPref, setDietPref] = useState("non-veg");
-  const [weeklyBudget, setWeeklyBudget] = useState("150");
+  const [weeklyBudget, setWeeklyBudget] = useState("1400");
   const [loading, setLoading] = useState(false);
   const [fetchingRec, setFetchingRec] = useState(true);
 
@@ -158,16 +158,16 @@ export default function MealPlannerPage() {
 
           <form onSubmit={handleGeneratePlan} className="space-y-6">
             <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">Weekly Budget ($)</label>
+              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider mb-2">Weekly Budget (₹ INR)</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 dark:text-gray-500 font-bold text-xs">$</span>
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 dark:text-gray-500 font-bold text-xs">₹</span>
                 <input
                   type="number"
                   required
                   value={weeklyBudget}
                   onChange={(e) => setWeeklyBudget(e.target.value)}
                   className="w-full pl-8 pr-4 py-3 border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 text-gray-900 dark:text-white rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-inner"
-                  placeholder="e.g. 150"
+                  placeholder="e.g. 1400"
                 />
               </div>
             </div>
