@@ -15,10 +15,12 @@ import {
   Sparkles,
   ShoppingBag,
   Loader2,
-  Trash
+  Trash,
+  Camera
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import MacroBreakdown from "@/components/food/MacroBreakdown";
+import FoodPhotoScannerModal from "@/components/food/FoodPhotoScannerModal";
 
 interface MealItem {
   id: string;
@@ -45,6 +47,7 @@ export default function FoodPage() {
 
   // Log Form State
   const [showModal, setShowModal] = useState(false);
+  const [showScannerModal, setShowScannerModal] = useState(false);
   const [mealType, setMealType] = useState("BREAKFAST");
   const [foodName, setFoodName] = useState("");
   const [calories, setCalories] = useState("");
@@ -150,7 +153,14 @@ export default function FoodPage() {
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Manage your daily meals, track protein goals, and check budget remaining.</p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => setShowScannerModal(true)}
+            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95"
+          >
+            <Camera className="w-4 h-4 text-cyan-200 animate-pulse" />
+            Scan Food Photo (AI)
+          </button>
           <Link
             href="/food/planner"
             className="flex items-center gap-2 px-5 py-3 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 bg-white dark:bg-slate-900 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-200 shadow-sm transition-all"
@@ -160,9 +170,9 @@ export default function FoodPage() {
           </Link>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition-all active:scale-95"
+            className="flex items-center gap-2 px-5 py-3 bg-white dark:bg-slate-900 hover:bg-gray-50 dark:hover:bg-slate-800 border border-gray-200 dark:border-slate-700 text-gray-800 dark:text-gray-200 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 text-blue-500" />
             Log Custom Meal
           </button>
         </div>
@@ -420,6 +430,13 @@ export default function FoodPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* AI Food Photo Scanner Modal */}
+      <FoodPhotoScannerModal
+        isOpen={showScannerModal}
+        onClose={() => setShowScannerModal(false)}
+        onSuccess={fetchFoodData}
+      />
     </div>
   );
 }
