@@ -63,12 +63,12 @@ export default function MotivationalSplashScreen() {
               transition={{ duration: 1.2, ease: "easeOut" }}
               className="relative"
             >
-              <div className="absolute -inset-3 bg-gradient-to-r from-emerald-400 via-teal-500 to-blue-500 rounded-3xl blur-xl opacity-60 animate-pulse" />
-              <div className="relative w-24 h-24 rounded-3xl bg-white p-3.5 shadow-2xl border border-white/20 flex items-center justify-center">
+              <div className="absolute -inset-4 bg-gradient-to-r from-emerald-400 via-teal-500 to-blue-500 rounded-full blur-2xl opacity-50 animate-pulse" />
+              <div className="relative w-28 h-28 flex items-center justify-center">
                 <img
                   src="/app-logo.png"
                   alt="LifeTrack Logo"
-                  className="w-full h-full object-contain drop-shadow-md"
+                  className="w-full h-full object-contain filter drop-shadow-[0_10px_25px_rgba(16,185,129,0.4)]"
                 />
               </div>
             </motion.div>

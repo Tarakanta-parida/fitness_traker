@@ -44,7 +44,7 @@ export default function Sidebar() {
         <div className="flex flex-col gap-5">
           {/* Logo / Brand Header */}
           <div className="flex items-center gap-3 pb-3 border-b border-gray-100 dark:border-slate-800/80">
-            <div className="w-10 h-10 rounded-2xl bg-white p-1 shadow-md border border-gray-100 dark:border-slate-800 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
               <img
                 src="/app-logo.png"
                 alt="LifeTrack Logo"

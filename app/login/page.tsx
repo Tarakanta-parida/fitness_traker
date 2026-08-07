@@ -13,12 +13,12 @@ export default function LoginPage() {
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          className="w-14 h-14 rounded-2xl bg-white p-1.5 shadow-lg border border-gray-100 flex items-center justify-center mb-4 overflow-hidden"
+          className="w-16 h-16 flex items-center justify-center mb-4"
         >
           <img
             src="/app-logo.png"
             alt="LifeTrack Logo"
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain filter drop-shadow-md"
           />
         </motion.div>
         
