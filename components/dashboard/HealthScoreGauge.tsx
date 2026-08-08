@@ -68,16 +68,23 @@ export default function HealthScoreGauge({
   const strokeDashoffset = circumference - (totalScore / 100) * circumference;
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white/80 dark:bg-slate-900/90 backdrop-blur-xl border border-gray-100 dark:border-slate-800/80 rounded-3xl p-6 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden"
+    >
+      {/* Background 3D Ambient Blur Glow */}
+      <div className="absolute -top-12 -right-12 w-48 h-48 bg-blue-500/10 dark:bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
         
         {/* Left Info Section */}
         <div className="flex-1 space-y-2 text-center sm:text-left">
           <div className="flex items-center justify-center sm:justify-start gap-2">
-            <span className="text-xs font-black uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">
               Daily Wellness Gauge
             </span>
-            <span className={`text-xs font-extrabold px-3 py-0.5 rounded-full border ${statusColor}`}>
+            <span className={`text-xs font-extrabold px-3 py-0.5 rounded-full border shadow-sm ${statusColor}`}>
               {statusText}
             </span>
           </div>
@@ -86,22 +93,30 @@ export default function HealthScoreGauge({
             Health Score: {totalScore} <span className="text-lg text-gray-400 font-normal">/ 100</span>
           </h2>
           
-          <p className="text-xs text-gray-500 dark:text-gray-400 max-w-sm">
+          <p className="text-xs text-gray-500 dark:text-gray-400 max-w-sm leading-relaxed">
             Composite health score generated from your steps, hydration, sleep duration, and calorie balance today.
           </p>
 
           <button
             onClick={() => setShowDetails(!showDetails)}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline pt-2"
+            className="inline-flex items-center gap-1.5 text-xs font-extrabold text-blue-600 dark:text-blue-400 hover:underline pt-2"
           >
             {showDetails ? "Hide Score Breakdown" : "View Score Breakdown"}
             {showDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
         </div>
 
-        {/* Right Circular Gauge */}
-        <div className="relative w-36 h-36 flex items-center justify-center shrink-0">
-          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
+        {/* Right 3D Circular Gauge */}
+        <div className="relative w-36 h-36 flex items-center justify-center shrink-0 group">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-500/20 via-blue-500/10 to-emerald-500/20 blur-xl opacity-75 group-hover:opacity-100 transition-opacity" />
+          <svg className="w-full h-full transform -rotate-90 relative z-10" viewBox="0 0 160 160">
+            <defs>
+              <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#3b82f6" />
+                <stop offset="50%" stopColor="#06b6d4" />
+                <stop offset="100%" stopColor="#10b981" />
+              </linearGradient>
+            </defs>
             {/* Track Circle */}
             <circle
               cx="80"
@@ -109,29 +124,29 @@ export default function HealthScoreGauge({
               r={radius}
               stroke="currentColor"
               strokeWidth={strokeWidth}
-              className="text-gray-100 dark:text-slate-800 fill-none"
+              className="text-gray-100 dark:text-slate-800/80 fill-none"
             />
-            {/* Glowing Progress Circle */}
+            {/* Glowing 3D Progress Circle */}
             <motion.circle
               cx="80"
               cy="80"
               r={radius}
-              stroke={strokeColor}
+              stroke="url(#gaugeGradient)"
               strokeWidth={strokeWidth}
               strokeDasharray={circumference}
               initial={{ strokeDashoffset: circumference }}
               animate={{ strokeDashoffset }}
               transition={{ duration: 1.5, ease: "easeOut" }}
               strokeLinecap="round"
-              className="fill-none drop-shadow-md"
+              className="fill-none filter drop-shadow-[0_4px_12px_rgba(6,182,212,0.5)]"
             />
           </svg>
-          {/* Inner Number */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+          {/* Inner 3D Number */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center z-20">
+            <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight drop-shadow-sm">
               {totalScore}
             </span>
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">
               Points
             </span>
           </div>
@@ -204,6 +219,6 @@ export default function HealthScoreGauge({
           </div>
         </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }
