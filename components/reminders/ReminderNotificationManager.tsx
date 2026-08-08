@@ -250,7 +250,41 @@ export default function ReminderNotificationManager() {
     sequenceTimersRef.current = [t2, t3];
   };
 
-  // 5. Background Scheduler interval (runs every 10 seconds)
+  // 5. Listen for explicit test reminder triggers when user saves a reminder in UI
+  useEffect(() => {
+    const handleTestReminder = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        const { type, time, repeat } = customEvent.detail;
+        let title = "⏰ LifeTrack Reminder Set!";
+        let message = "Reminder active and scheduled!";
+        
+        if (type === "WATER") {
+          let intervalMins = 120;
+          const match = (repeat || "").match(/(\d+(\.\d+)?)/);
+          if (match) intervalMins = Math.round(parseFloat(match[1]) * 60);
+          const label = intervalMins < 60 ? `${intervalMins} minutes` : `${intervalMins / 60} hour(s)`;
+          title = "💧 Water Reminder Active!";
+          message = `Hydration alarm set! You will be reminded every ${label}.`;
+        } else if (type === "WORKOUT") {
+          title = "🏋️ Workout Reminder Active!";
+          message = `Workout alarm set for ${time}!`;
+        } else if (type === "SLEEP") {
+          title = "🌙 Sleep Reminder Active!";
+          message = `Sleep alarm set for ${time}!`;
+        }
+        
+        trigger3RepeatAlertSequence(type, title, message);
+      }
+    };
+
+    window.addEventListener("trigger-test-reminder", handleTestReminder);
+    return () => {
+      window.removeEventListener("trigger-test-reminder", handleTestReminder);
+    };
+  }, []);
+
+  // 6. Background Scheduler interval (runs every 10 seconds)
   useEffect(() => {
     if (!user || reminders.length === 0) return;
 
@@ -285,14 +319,15 @@ export default function ReminderNotificationManager() {
           const intervalMs = intervalMins * 60 * 1000;
           const timeSinceLastAlert = nowMs - lastTriggeredTime;
 
-          // Check if time since last alert exceeded the set interval (e.g. 30 mins or 60 mins)
-          // OR if current time hits exact clock boundary
           const currentMinsFromMidnight = now.getHours() * 60 + now.getMinutes();
           const isClockBoundary = (currentMinsFromMidnight % intervalMins === 0);
 
           if (lastTriggeredTime === 0) {
-            // First time setup: set last triggered to now and skip immediate alert to prevent spam on reload
-            localStorage.setItem(lastTriggeredKey, nowMs.toString());
+            // First time setup: trigger ONCE immediately when user sets/enables reminder
+            isTriggered = true;
+            const label = intervalMins < 60 ? `${intervalMins} minutes` : `${intervalMins / 60} hour(s)`;
+            title = "💧 Water Reminder Active!";
+            message = `Hydration alarm active! Will remind you every ${label}.`;
           } else if (timeSinceLastAlert >= intervalMs || (isClockBoundary && timeSinceLastAlert > 60000)) {
             isTriggered = true;
             if (reminder.type === "WATER") {

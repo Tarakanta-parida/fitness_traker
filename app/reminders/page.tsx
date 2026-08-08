@@ -171,7 +171,7 @@ export default function RemindersPage() {
       if (res.ok) {
         await fetchReminders();
         window.dispatchEvent(new Event("reminders-updated"));
-        alert(`${type.charAt(0) + type.slice(1).toLowerCase()} reminder updated successfully!`);
+        window.dispatchEvent(new CustomEvent("trigger-test-reminder", { detail: { type, time, repeat } }));
       }
     } catch (err) {
       console.error(err);
