@@ -60,9 +60,11 @@ export default function FoodPhotoScannerModal({
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Clean up camera stream tracks when modal closes
+  // Auto-start live camera stream when modal opens
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      startLiveCamera();
+    } else {
       stopLiveCamera();
       resetState();
     }
