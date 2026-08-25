@@ -8,9 +8,44 @@ self.addEventListener('activate', (event) => {
 
 // Offline network fallback
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  // Never intercept API calls, Next.js internal assets, or Clerk auth requests
+  if (
+    event.request.method !== 'GET' ||
+    url.pathname.startsWith('/api') ||
+    url.pathname.startsWith('/_next') ||
+    url.hostname.includes('clerk')
+  ) {
+    return;
+  }
+
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return new Response("LifeTrack is active in offline mode.");
+    fetch(event.request).catch(async () => {
+      return new Response(
+        `<!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>LifeTrack - Connection Status</title>
+            <style>
+              body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; text-align: center; }
+              .card { background: #1e293b; padding: 2.5rem; border-radius: 1.5rem; border: 1px solid #334155; max-width: 380px; shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+              h2 { margin-top: 0; color: #38bdf8; font-size: 1.25rem; font-weight: 800; }
+              p { color: #94a3b8; font-size: 0.875rem; line-height: 1.5; }
+              button { background: linear-gradient(to right, #2563eb, #4f46e5); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-weight: 700; cursor: pointer; margin-top: 1rem; width: 100%; }
+            </style>
+          </head>
+          <body>
+            <div class="card">
+              <h2>LifeTrack Network Status</h2>
+              <p>Re-establishing secure server connection. Please tap below to reload your dashboard.</p>
+              <button onclick="window.location.reload()">Reload Application</button>
+            </div>
+          </body>
+        </html>`,
+        { headers: { 'Content-Type': 'text/html' } }
+      );
     })
   );
 });
