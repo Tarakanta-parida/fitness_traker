@@ -71,13 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user && !isPublicRoute) {
       router.push("/login");
     } else if (user && isPublicRoute && pathname !== "/") {
-      if (!user.isOnboarded) {
-        router.push("/onboarding");
-      } else {
-        router.push("/dashboard");
-      }
-    } else if (user && !user.isOnboarded && pathname !== "/onboarding" && !publicRoutes.includes(pathname)) {
-      router.push("/onboarding");
+      router.push("/dashboard");
     }
   }, [user, loading, pathname, router]);
 
