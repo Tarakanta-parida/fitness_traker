@@ -342,17 +342,7 @@ export default function DashboardPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50/30 flex items-center justify-center p-6">
-        <div className="bg-red-50/10 border border-red-200/50 p-6 rounded-3xl text-center max-w-md">
-          <p className="text-red-650 font-bold mb-2">System Sync Failed</p>
-          <p className="text-sm text-gray-500">{error}</p>
-          <button onClick={() => { setLoading(true); setError(""); fetchDashboardData(); }} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold">Retry Connection</button>
-        </div>
-      </div>
-    );
-  }
+
 
   const dashboardData: SummaryData = data || {
     date: new Date().toISOString(),
