@@ -51,7 +51,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [data, setData] = useState<SummaryData | null>(null);
   const [currentLocalDate, setCurrentLocalDate] = useState<Date | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showWeeklyReport, setShowWeeklyReport] = useState(false);
   
@@ -331,16 +331,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50/30 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-          <span className="text-sm text-gray-400 font-medium">Calibrating coach parameters...</span>
-        </div>
-      </div>
-    );
-  }
+
 
 
 
