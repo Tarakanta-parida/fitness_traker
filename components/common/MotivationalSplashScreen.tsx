@@ -15,18 +15,28 @@ const MOTIVATIONAL_QUOTES = [
 ];
 
 export default function MotivationalSplashScreen() {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState(MOTIVATIONAL_QUOTES[0]);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    // Pick a random quote on each page open/refresh
+    // Only show splash screen once per browser session
+    const hasShown = sessionStorage.getItem("lifetrack_splash_shown");
+    if (hasShown) {
+      setVisible(false);
+      return;
+    }
+
+    setVisible(true);
+    sessionStorage.setItem("lifetrack_splash_shown", "true");
+
+    // Pick a random quote on first load
     const randomIndex = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
     setSelectedQuote(MOTIVATIONAL_QUOTES[randomIndex]);
 
-    // Animate 4-second progress bar (4000ms)
+    // Animate 1-second progress bar (1000ms) for snappy fast experience
     const startTime = Date.now();
-    const DURATION = 4000;
+    const DURATION = 1000;
 
     const progressInterval = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -37,7 +47,7 @@ export default function MotivationalSplashScreen() {
         clearInterval(progressInterval);
         setVisible(false);
       }
-    }, 40);
+    }, 30);
 
     return () => clearInterval(progressInterval);
   }, []);
@@ -46,10 +56,11 @@ export default function MotivationalSplashScreen() {
     <AnimatePresence>
       {visible && (
         <motion.div
+          onClick={() => setVisible(false)}
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.05 }}
-          transition={{ duration: 0.6, ease: "easeInOut" }}
-          className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center p-6 text-white overflow-hidden select-none"
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+          className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center p-6 text-white overflow-hidden select-none cursor-pointer"
         >
           {/* Ambient Background Glowing Orbs */}
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-gradient-to-tr from-emerald-500/20 via-teal-500/20 to-blue-500/20 rounded-full blur-3xl pointer-events-none" />
