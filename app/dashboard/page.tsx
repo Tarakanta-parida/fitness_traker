@@ -173,7 +173,7 @@ export default function DashboardPage() {
     }, 30000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [user?.id]);
 
   const handleQuickWater = async () => {
     if (!data) return;
@@ -354,12 +354,32 @@ export default function DashboardPage() {
     );
   }
 
-  if (!data) return null;
+  const dashboardData: SummaryData = data || {
+    date: new Date().toISOString(),
+    steps: 0,
+    stepsGoal: user?.stepsTarget || 10000,
+    distance: 0.0,
+    caloriesBurned: 0,
+    caloriesConsumed: 0,
+    proteinConsumed: 0,
+    waterGlasses: 0,
+    waterGoal: 10,
+    sleepHours: null,
+    sleepQuality: null,
+    workoutMinutes: 0,
+    workoutCompleted: false,
+    todayFoodCost: 0,
+    budgetRemaining: Number(user?.budget || 1400),
+    currentWeight: Number(user?.weight || 70),
+    currentBmi: null,
+    meals: [],
+    exercises: [],
+  };
 
   // Calculations for Ring progress
-  const stepPercent = Math.min(100, Math.round((pedometer.steps / data.stepsGoal) * 100));
-  const waterPercent = Math.min(100, Math.round((data.waterGlasses / data.waterGoal) * 100));
-  const exercisePercent = Math.min(100, Math.round((data.workoutMinutes / 60) * 100)); // Default 60 mins workout goal
+  const stepPercent = Math.min(100, Math.round((pedometer.steps / (dashboardData.stepsGoal || 10000)) * 100));
+  const waterPercent = Math.min(100, Math.round((dashboardData.waterGlasses / (dashboardData.waterGoal || 10)) * 100));
+  const exercisePercent = Math.min(100, Math.round((dashboardData.workoutMinutes / 60) * 100)); // Default 60 mins workout goal
   const caloriesBurntPercent = Math.min(100, Math.round((pedometer.caloriesBurned / 500) * 100)); // Default 500 active kcal goal
 
   const getGreeting = () => {
@@ -398,7 +418,7 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mt-0.5">
               {currentLocalDate
                 ? currentLocalDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })
-                : new Date(data.date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                : new Date(dashboardData.date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
             </p>
           </div>
         </div>
@@ -412,12 +432,12 @@ export default function DashboardPage() {
         <div className="col-span-1 lg:col-span-2">
           <HealthScoreGauge
             stepsCurrent={pedometer.steps}
-            stepsTarget={data.stepsGoal}
-            waterCurrent={data.waterGlasses}
-            waterTarget={data.waterGoal}
-            sleepCurrent={Number(data.sleepHours || 0)}
+            stepsTarget={dashboardData.stepsGoal}
+            waterCurrent={dashboardData.waterGlasses}
+            waterTarget={dashboardData.waterGoal}
+            sleepCurrent={Number(dashboardData.sleepHours || 0)}
             sleepTarget={8}
-            caloriesCurrent={data.caloriesConsumed}
+            caloriesCurrent={dashboardData.caloriesConsumed}
             caloriesTarget={2000}
           />
         </div>
@@ -432,9 +452,9 @@ export default function DashboardPage() {
         onClose={() => setShowWeeklyReport(false)}
         userName={user?.name}
         totalSteps={pedometer.steps * 7}
-        avgWater={data.waterGlasses}
-        avgSleep={Number(data.sleepHours || 7.5)}
-        totalCalories={data.caloriesBurned * 7}
+        avgWater={dashboardData.waterGlasses}
+        avgSleep={Number(dashboardData.sleepHours || 7.5)}
+        totalCalories={dashboardData.caloriesBurned * 7}
       />
 
       {/* PWA Install Promo Banner */}
@@ -586,7 +606,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <span className="text-2xl font-black text-gray-800 dark:text-white block mt-1">{pedometer.steps.toLocaleString()}</span>
-              <span className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">Goal: {data.stepsGoal.toLocaleString()} ({pedometer.distance.toFixed(1)} km)</span>
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">Goal: {dashboardData.stepsGoal.toLocaleString()} ({pedometer.distance.toFixed(1)} km)</span>
             </div>
           </div>
 
@@ -601,7 +621,7 @@ export default function DashboardPage() {
             <div className="mt-4">
               <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold block">Active Burned</span>
               <span className="text-2xl font-black text-gray-800 dark:text-white block mt-1">{pedometer.caloriesBurned.toFixed(1)} kcal</span>
-              <span className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">Workout Duration: {data.workoutMinutes} mins</span>
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">Workout Duration: {dashboardData.workoutMinutes} mins</span>
             </div>
           </div>
 
@@ -615,8 +635,8 @@ export default function DashboardPage() {
             </div>
             <div className="mt-4">
               <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold block">Water Intake</span>
-              <span className="text-2xl font-black text-gray-800 dark:text-white block mt-1">{data.waterGlasses} glasses</span>
-              <span className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">Goal: {data.waterGoal} (Drink: +1 glass action)</span>
+              <span className="text-2xl font-black text-gray-800 dark:text-white block mt-1">{dashboardData.waterGlasses} glasses</span>
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block">Goal: {dashboardData.waterGoal} (Drink: +1 glass action)</span>
             </div>
           </div>
 
@@ -631,10 +651,10 @@ export default function DashboardPage() {
             <div className="mt-4">
               <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold block">Sleep Duration</span>
               <span className="text-2xl font-black text-gray-800 dark:text-white block mt-1">
-                {data.sleepHours !== null ? `${data.sleepHours} hrs` : "No Log"}
+                {dashboardData.sleepHours !== null ? `${dashboardData.sleepHours} hrs` : "No Log"}
               </span>
               <span className="text-[11px] text-gray-500 dark:text-gray-400 mt-1 block capitalize">
-                Quality: {data.sleepQuality || "No rating"}
+                Quality: {dashboardData.sleepQuality || "No rating"}
               </span>
             </div>
           </div>
@@ -699,17 +719,17 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-gray-800 dark:text-white tracking-tight uppercase">Today's Meals</h3>
               <span className="text-xs font-semibold text-green-600 dark:text-green-400 bg-green-55/10 dark:bg-green-950/40 px-2 py-0.5 rounded-full">
-                {data.caloriesConsumed} kcal consumed
+                {dashboardData.caloriesConsumed} kcal consumed
               </span>
             </div>
             
-            {data.meals.length === 0 ? (
+            {dashboardData.meals.length === 0 ? (
               <div className="py-8 text-center text-xs text-gray-400 dark:text-gray-500">
                 No meals logged today. Use Quick Action to add.
               </div>
             ) : (
               <div className="space-y-3 max-h-[200px] overflow-y-auto pr-1">
-                {data.meals.map((meal) => (
+                {dashboardData.meals.map((meal) => (
                   <div key={meal.id} className="flex justify-between items-center p-3 border border-gray-50 dark:border-slate-800 rounded-xl text-xs bg-gray-50/30 dark:bg-slate-800/50">
                     <div>
                       <span className="font-semibold text-gray-800 dark:text-gray-200 block capitalize">{meal.foodName}</span>
@@ -717,7 +737,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <span className="font-bold text-gray-800 dark:text-gray-200 block">{meal.calories} kcal</span>
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500 block">${Number(meal.price).toFixed(2)}</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 block">₹{Number(meal.price || 0).toFixed(0)}</span>
                     </div>
                   </div>
                 ))}
@@ -726,7 +746,7 @@ export default function DashboardPage() {
           </div>
           <div className="border-t border-gray-50 dark:border-slate-800 pt-4 flex justify-between items-center mt-4">
             <div className="text-xs text-gray-450 dark:text-gray-400">
-              Weekly budget remaining: <span className="font-bold text-gray-800 dark:text-gray-200">${data.budgetRemaining.toFixed(2)}</span>
+              Weekly budget remaining: <span className="font-bold text-gray-800 dark:text-gray-200">₹{dashboardData.budgetRemaining.toFixed(0)}</span>
             </div>
             <button onClick={() => setShowMealInput(true)} className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center hover:underline">
               Add Meal <Plus className="w-3.5 h-3.5 ml-0.5" />
@@ -740,17 +760,17 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-gray-800 dark:text-white tracking-tight uppercase">Today's Workouts</h3>
               <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-55/10 dark:bg-blue-950/40 px-2 py-0.5 rounded-full">
-                {data.workoutMinutes} mins active
+                {dashboardData.workoutMinutes} mins active
               </span>
             </div>
             
-            {data.exercises.length === 0 ? (
+            {dashboardData.exercises.length === 0 ? (
               <div className="py-8 text-center text-xs text-gray-400 dark:text-gray-500">
                 No exercises logged today. Stay active!
               </div>
             ) : (
               <div className="space-y-3 max-h-[200px] overflow-y-auto pr-1">
-                {data.exercises.map((ex) => (
+                {dashboardData.exercises.map((ex) => (
                   <div key={ex.id} className="flex justify-between items-center p-3 border border-gray-50 dark:border-slate-800 rounded-xl text-xs bg-gray-50/30 dark:bg-slate-800/50">
                     <div>
                       <span className="font-semibold text-gray-800 dark:text-gray-200 block capitalize">{ex.exerciseName}</span>
@@ -766,7 +786,7 @@ export default function DashboardPage() {
           </div>
           <div className="border-t border-gray-50 dark:border-slate-800 pt-4 flex justify-between items-center mt-4">
             <div className="text-xs text-gray-450 dark:text-gray-400">
-              Status: <span className="font-bold text-gray-800 dark:text-gray-200">{data.workoutCompleted ? "Completed Today's Routine" : "Rest Day or Pending"}</span>
+              Status: <span className="font-bold text-gray-800 dark:text-gray-200">{dashboardData.workoutCompleted ? "Completed Today's Routine" : "Rest Day or Pending"}</span>
             </div>
             <button onClick={() => setShowExerciseInput(true)} className="text-xs font-semibold text-blue-600 dark:text-blue-400 flex items-center hover:underline">
               Log Workout <Plus className="w-3.5 h-3.5 ml-0.5" />
