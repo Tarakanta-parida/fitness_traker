@@ -59,10 +59,12 @@ export default function MealPlannerPage() {
   } | null>(null);
   const [groceryItems, setGroceryItems] = useState<GroceryItem[]>([]);
 
-  const fetchPlannerRecommendations = async () => {
+  const fetchPlannerRecommendations = async (overrideDiet?: string, overrideBudget?: string) => {
     setFetchingRec(true);
     try {
-      const res = await fetch("/api/food/planner");
+      const targetDiet = overrideDiet || dietPref;
+      const targetBudget = overrideBudget || weeklyBudget;
+      const res = await fetch(`/api/food/planner?diet=${targetDiet}&budget=${targetBudget}`);
       if (res.ok) {
         const json = await res.json();
         setNutritionTargets(json.nutritionTargets);
@@ -90,7 +92,7 @@ export default function MealPlannerPage() {
   };
 
   useEffect(() => {
-    fetchPlannerRecommendations();
+    fetchPlannerRecommendations(dietPref, weeklyBudget);
     fetchGroceryList();
   }, []);
 
@@ -109,14 +111,27 @@ export default function MealPlannerPage() {
       });
 
       if (res.ok) {
+        const json = await res.json();
+        if (json.mealPlan) {
+          setMealPlan(json.mealPlan);
+        }
+        if (json.nutritionTargets) {
+          setNutritionTargets(json.nutritionTargets);
+        }
+        if (json.groceryList) {
+          setGroceryItems(json.groceryList.map((g: any, i: number) => ({
+            id: `g-${i}`,
+            item: g.item,
+            quantity: g.quantity,
+            price: g.price.toString()
+          })));
+        }
+
         confetti({
           particleCount: 150,
           spread: 80,
           origin: { y: 0.6 }
         });
-        
-        await fetchPlannerRecommendations();
-        await fetchGroceryList();
       }
     } catch (err) {
       alert("Failed to compile weekly plan");
