@@ -25,8 +25,8 @@ export default function Sidebar() {
   const { user } = useAuth();
   const { signOut } = useClerk();
 
-  // If user is not logged in or not onboarded, we don't show the navigation bar
-  if (!user || !user.isOnboarded) return null;
+  // If user is not logged in, we don't show the navigation bar
+  if (!user) return null;
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: Home },

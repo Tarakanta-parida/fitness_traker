@@ -28,11 +28,26 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
 }
 
+const DEFAULT_GUEST_USER: UserProfile = {
+  id: "guest-user",
+  name: "LifeTrack Member",
+  email: "member@lifetrack.app",
+  isOnboarded: true,
+  stepsTarget: 10000,
+  sleepTarget: 8,
+  budget: 1400,
+  weight: 70,
+  height: 175,
+  age: 28,
+  gender: "male",
+  goal: "FITNESS",
+};
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<UserProfile>(DEFAULT_GUEST_USER);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { isSignedIn, user: clerkUser, isLoaded } = useUser();
@@ -42,13 +57,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/auth/me");
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user);
-      } else {
-        setUser(null);
+        if (data.user) {
+          setUser({ ...data.user, isOnboarded: true });
+          return;
+        }
       }
+      setUser(DEFAULT_GUEST_USER);
     } catch (err) {
-      console.error("Failed to load auth session", err);
-      setUser(null);
+      setUser(DEFAULT_GUEST_USER);
     } finally {
       setLoading(false);
     }
@@ -60,7 +76,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isSignedIn, clerkUser?.id, isLoaded]);
 
-
   // Handle route protection
   useEffect(() => {
     if (loading) return;
@@ -68,9 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const publicRoutes = ["/login", "/signup", "/"];
     const isPublicRoute = publicRoutes.includes(pathname);
 
-    if (!user && !isPublicRoute) {
-      router.push("/login");
-    } else if (user && isPublicRoute && pathname !== "/") {
+    if (user && isPublicRoute && pathname !== "/") {
       router.push("/dashboard");
     }
   }, [user, loading, pathname, router]);
@@ -119,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      setUser(null);
+      setUser(DEFAULT_GUEST_USER);
       router.push("/login");
     } catch (err) {
       console.error("Logout failed", err);
