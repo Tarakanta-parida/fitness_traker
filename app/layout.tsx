@@ -19,9 +19,18 @@ export const metadata: Metadata = {
   title: "LifeTrack - Personal Health & Habit Tracker",
   description: "Track activities, sleep, meals, water, and budget targets to improve your daily lifestyle.",
   icons: {
-    icon: "/app-logo.png",
-    apple: "/app-logo.png",
-  }
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/app-logo.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/app-logo.png",
+    apple: [
+      { url: "/app-logo.png", sizes: "180x180", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+  },
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({
