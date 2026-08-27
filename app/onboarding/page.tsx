@@ -161,21 +161,21 @@ export default function OnboardingPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Age</label>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Age</label>
                     <input
                       type="number"
                       value={age}
                       onChange={(e) => setAge(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl shadow-inner text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+                      className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm text-gray-900 dark:text-white bg-white dark:bg-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g. 28"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Gender</label>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Gender</label>
                     <select
                       value={gender}
                       onChange={(e) => setGender(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+                      className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm text-gray-900 dark:text-white bg-white dark:bg-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="male">Male</option>
                       <option value="female">Female</option>
@@ -186,22 +186,22 @@ export default function OnboardingPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Height (cm)</label>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Height (cm)</label>
                     <input
                       type="number"
                       value={height}
                       onChange={(e) => setHeight(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl shadow-inner text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+                      className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm text-gray-900 dark:text-white bg-white dark:bg-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g. 175"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Weight (kg)</label>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Weight (kg)</label>
                     <input
                       type="number"
                       value={weight}
                       onChange={(e) => setWeight(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl shadow-inner text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+                      className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm text-gray-900 dark:text-white bg-white dark:bg-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g. 70"
                     />
                   </div>
@@ -219,8 +219,8 @@ export default function OnboardingPage() {
                 className="space-y-6"
               >
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">What is your primary goal?</h3>
-                  <p className="text-xs text-gray-500 mt-1">Select a program that matches your focus.</p>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">What is your primary goal?</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Select a program that matches your focus.</p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-3">
@@ -234,16 +234,16 @@ export default function OnboardingPage() {
                       onClick={() => setGoal(g.val)}
                       className={`p-4 border rounded-2xl cursor-pointer transition-all flex items-center justify-between ${
                         goal === g.val 
-                          ? "border-blue-500 bg-blue-50/20" 
-                          : "border-gray-150 hover:bg-gray-50"
+                          ? "border-blue-500 bg-blue-50/20 dark:bg-blue-950/40" 
+                          : "border-gray-150 dark:border-slate-800 hover:bg-gray-50 dark:hover:bg-slate-800"
                       }`}
                     >
                       <div>
-                        <span className="font-semibold text-sm text-gray-800">{g.title}</span>
-                        <p className="text-[11px] text-gray-500 mt-0.5">{g.desc}</p>
+                        <span className="font-semibold text-sm text-gray-800 dark:text-gray-100">{g.title}</span>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{g.desc}</p>
                       </div>
                       <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                        goal === g.val ? "border-blue-500 bg-blue-500 text-white" : "border-gray-300"
+                        goal === g.val ? "border-blue-500 bg-blue-500 text-white" : "border-gray-300 dark:border-slate-700"
                       }`}>
                         {goal === g.val && <Check className="w-3.5 h-3.5" />}
                       </div>
@@ -253,21 +253,21 @@ export default function OnboardingPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Daily Steps Target</label>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Daily Steps Target</label>
                     <input
                       type="number"
                       value={stepsTarget}
                       onChange={(e) => setStepsTarget(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl shadow-inner text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+                      className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm text-gray-900 dark:text-white bg-white dark:bg-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Sleep Target (Hours)</label>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Sleep Target (Hours)</label>
                     <input
                       type="number"
                       value={sleepTarget}
                       onChange={(e) => setSleepTarget(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-2xl shadow-inner text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+                      className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm text-gray-900 dark:text-white bg-white dark:bg-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -284,17 +284,17 @@ export default function OnboardingPage() {
                 className="space-y-6"
               >
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900">Nutrition & Budget</h3>
-                  <p className="text-xs text-gray-500 mt-1">Configure your weekly food budget and preferences.</p>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Nutrition & Budget</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Configure your weekly food budget and preferences.</p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Weekly Food Budget ($)</label>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-2">Weekly Food Budget (₹ INR)</label>
                   <input
                     type="number"
                     value={budget}
                     onChange={(e) => setBudget(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl shadow-inner text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/10"
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-slate-700 rounded-2xl text-sm text-gray-900 dark:text-white bg-white dark:bg-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <p className="text-[10px] text-gray-400 mt-1">Estimates budget meal recipes and grocery calculations.</p>
                 </div>

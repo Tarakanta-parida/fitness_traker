@@ -250,7 +250,7 @@ export default function ProfilePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-semibold text-gray-555 dark:text-gray-400 uppercase mb-1">Weekly Budget ($)</label>
+                <label className="block text-[10px] font-semibold text-gray-555 dark:text-gray-400 uppercase mb-1">Weekly Budget (₹ INR)</label>
                 <input
                   type="number"
                   value={budget}
