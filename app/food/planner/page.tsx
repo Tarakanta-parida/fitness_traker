@@ -39,41 +39,109 @@ const formatPrice = (val: number) => {
   return `₹${Math.round(val)}`;
 };
 
+const defaultVegPlan = {
+  breakfast: {
+    name: "Moong Dal Chilla & Roasted Chana",
+    calories: 320,
+    protein: 14,
+    cost: 25.00,
+    ingredients: ["Sprouted Moong Dal (70g)", "1 Green Chilli & Ginger", "Roasted Bengal Gram (30g)"]
+  },
+  lunch: {
+    name: "Toor Dal Tadka, Roti (2) & Mixed Veg Subji",
+    calories: 520,
+    protein: 18,
+    cost: 50.00,
+    ingredients: ["Split Pigeon Peas (Toor Dal) (60g)", "2 Slices Whole Wheat Chapati", "Mixed Cauliflower/Beans (150g)", "Mustard Oil (1 tsp)"]
+  },
+  dinner: {
+    name: "Soya Chunks Masala with Brown Rice",
+    calories: 460,
+    protein: 26,
+    cost: 45.00,
+    ingredients: ["High-protein Soya Chunks (50g)", "Boiled Brown Rice (80g)", "Onion & Tomato Gravy"]
+  },
+  snack: {
+    name: "Sprouted Moong Salad with Lemon",
+    calories: 150,
+    protein: 8,
+    cost: 15.00,
+    ingredients: ["Sprouted Green Gram (100g)", "Lemon Juice", "1 Cucumber & Tomato"]
+  },
+  totalCost: 135,
+  totalCalories: 1450,
+  totalProtein: 66,
+};
+
+const defaultNonVegPlan = {
+  breakfast: {
+    name: "Egg Bhurji (3 Eggs) & Whole Wheat Toast",
+    calories: 380,
+    protein: 24,
+    cost: 35.00,
+    ingredients: ["3 Whole Eggs", "2 Slices Whole Wheat Bread", "Onion, Tomato & Chillies"]
+  },
+  lunch: {
+    name: "Home Style Chicken Curry with Steamed Rice",
+    calories: 590,
+    protein: 38,
+    cost: 75.00,
+    ingredients: ["Lean Chicken Pieces (150g)", "White Basmati Rice (100g)", "Onion, Garlic & Spice Gravy"]
+  },
+  dinner: {
+    name: "Double Egg Curry with Roti (2)",
+    calories: 450,
+    protein: 20,
+    cost: 40.00,
+    ingredients: ["2 Hard Boiled Eggs", "2 Whole Wheat Chapatis", "Tomato Curry Gravy"]
+  },
+  snack: {
+    name: "Roasted Peanuts & Green Tea",
+    calories: 180,
+    protein: 8,
+    cost: 15.00,
+    ingredients: ["Dry Roasted Peanuts (30g)", "1 Cup Green Tea (No Sugar)"]
+  },
+  totalCost: 165,
+  totalCalories: 1600,
+  totalProtein: 90,
+};
+
+const defaultGroceryList: GroceryItem[] = [
+  { id: "g-0", item: "Fresh Chicken Breast / Curry Cut", quantity: "1.5 kg", price: "340" },
+  { id: "g-1", item: "Farm Fresh Eggs", quantity: "30 units (1 Tray)", price: "180" },
+  { id: "g-2", item: "Rolled Oats / Poha", quantity: "1 kg Pack", price: "120" },
+  { id: "g-3", item: "Tone Milk", quantity: "3 Liters", price: "180" },
+  { id: "g-4", item: "Basmati Rice / Wheat Atta", quantity: "5 kg", price: "240" },
+  { id: "g-5", item: "Fresh Green Veggies (Tomato, Onion, Palak)", quantity: "2 kg", price: "140" },
+  { id: "g-6", item: "High-Protein Soya Chunks", quantity: "500g", price: "65" },
+  { id: "g-7", item: "Almonds & Roasted Chana", quantity: "250g", price: "160" },
+];
+
 export default function MealPlannerPage() {
   const { user } = useAuth();
   const [dietPref, setDietPref] = useState("non-veg");
   const [weeklyBudget, setWeeklyBudget] = useState("1400");
   const [loading, setLoading] = useState(false);
-  const [fetchingRec, setFetchingRec] = useState(true);
+  const [fetchingRec, setFetchingRec] = useState(false);
 
   // Recommendation states
-  const [nutritionTargets, setNutritionTargets] = useState<{ calories: number; protein: number; dailyBudget: number } | null>(null);
-  const [mealPlan, setMealPlan] = useState<{
-    breakfast: MealRec;
-    lunch: MealRec;
-    dinner: MealRec;
-    snack: MealRec;
-    totalCost: number;
-    totalCalories: number;
-    totalProtein: number;
-  } | null>(null);
-  const [groceryItems, setGroceryItems] = useState<GroceryItem[]>([]);
+  const [nutritionTargets, setNutritionTargets] = useState<{ calories: number; protein: number; dailyBudget: number }>({ calories: 2000, protein: 90, dailyBudget: 200 });
+  const [mealPlan, setMealPlan] = useState<any>(defaultNonVegPlan);
+  const [groceryItems, setGroceryItems] = useState<GroceryItem[]>(defaultGroceryList);
 
   const fetchPlannerRecommendations = async (overrideDiet?: string, overrideBudget?: string) => {
-    setFetchingRec(true);
     try {
       const targetDiet = overrideDiet || dietPref;
       const targetBudget = overrideBudget || weeklyBudget;
       const res = await fetch(`/api/food/planner?diet=${targetDiet}&budget=${targetBudget}`);
       if (res.ok) {
         const json = await res.json();
-        setNutritionTargets(json.nutritionTargets);
-        setMealPlan(json.mealPlan);
+        if (json.nutritionTargets) setNutritionTargets(json.nutritionTargets);
+        if (json.mealPlan) setMealPlan(json.mealPlan);
       }
     } catch (err) {
       console.error(err);
-    } finally {
-      setFetchingRec(false);
     }
   };
 
@@ -84,7 +152,9 @@ export default function MealPlannerPage() {
       const res = await fetch(`/api/food/grocery?week=${currentWeek}`);
       if (res.ok) {
         const json = await res.json();
-        setGroceryItems(json.groceryList || []);
+        if (json.groceryList && json.groceryList.length > 0) {
+          setGroceryItems(json.groceryList);
+        }
       }
     } catch (err) {
       console.error(err);
