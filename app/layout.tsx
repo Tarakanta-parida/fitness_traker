@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -8,9 +8,11 @@ import ReminderNotificationManager from "@/components/reminders/ReminderNotifica
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import MotivationalSplashScreen from "@/components/common/MotivationalSplashScreen";
 
-const inter = Inter({ 
+const plusJakarta = Plus_Jakarta_Sans({ 
   subsets: ["latin"],
-  variable: "--font-inter" 
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-plus-jakarta",
+  display: "swap"
 });
 
 export const metadata: Metadata = {
@@ -59,7 +61,7 @@ export default function RootLayout({
             }}
           />
         </head>
-        <body className={`${inter.variable} font-sans antialiased text-gray-900 dark:text-gray-100 bg-gray-50/30 dark:bg-slate-950 transition-colors`}>
+        <body className={`${plusJakarta.variable} font-sans antialiased text-gray-900 dark:text-gray-100 bg-gray-50/30 dark:bg-slate-950 transition-colors`}>
           <ThemeProvider>
             <AuthProvider>
               <MotivationalSplashScreen />
